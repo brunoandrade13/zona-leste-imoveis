@@ -10,14 +10,14 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
 header{background:linear-gradient(135deg,#0d1220,#1a2040);border-bottom:1px solid var(--bd);padding:16px 20px;position:sticky;top:0;z-index:100}
 .hi{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.logo{font-size:17px;font-weight:700;cursor:pointer}.logo span{color:var(--ac)}
+.logo{font-size:17px;font-weight:700;cursor:pointer;letter-spacing:-.3px}.logo span{color:var(--ac)}
 .hstats{display:flex;gap:20px;margin-left:auto}
 .hn{font-size:20px;font-weight:700;color:var(--ac);line-height:1}
 .hl{font-size:10px;color:var(--mt);text-transform:uppercase;letter-spacing:.5px}
+/* LISTA */
 .ctrl{max-width:1400px;margin:16px auto 0;padding:0 16px;display:flex;gap:8px;flex-wrap:wrap}
 input,select{background:var(--s);border:1px solid var(--bd);border-radius:8px;color:var(--t);padding:8px 12px;font-size:13px;outline:none;transition:border-color .2s}
-input{flex:1;min-width:200px}
-input:focus,select:focus{border-color:var(--ac)}
+input{flex:1;min-width:200px}input:focus,select:focus{border-color:var(--ac)}
 .fbtn{background:var(--s2);border:1px solid var(--bd);border-radius:8px;color:var(--t);padding:8px 12px;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap}
 .fbtn:hover{border-color:var(--ac);color:var(--ac)}.fbtn.on{background:var(--ac);border-color:var(--ac);color:#fff}
 .cbar{max-width:1400px;margin:8px auto 0;padding:0 16px;font-size:11px;color:var(--mt)}
@@ -26,60 +26,73 @@ input:focus,select:focus{border-color:var(--ac)}
 @media(min-width:860px){.grid{grid-template-columns:1fr 1fr 1fr}}
 @media(min-width:1200px){.grid{grid-template-columns:repeat(4,1fr)}}
 .card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:box-shadow .2s,border-color .2s,transform .15s}
-.card:hover{box-shadow:0 4px 20px rgba(79,125,255,.15);border-color:#3a4870;transform:translateY(-2px)}
+.card:hover{box-shadow:0 6px 24px rgba(79,125,255,.18);border-color:#3a4870;transform:translateY(-2px)}
 .card.obs{border-color:var(--w)}
-.ci{width:100%;height:150px;object-fit:cover;display:block;background:var(--s2)}
-.cp{width:100%;height:150px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--mt);font-size:32px}
-.cb{padding:11px 13px;flex:1;display:flex;flex-direction:column;gap:5px}
+.ci{width:100%;height:155px;object-fit:cover;display:block;background:var(--s2)}
+.cp{width:100%;height:155px;background:var(--s2);display:flex;align-items:center;justify-content:center;color:var(--mt);font-size:32px}
+.cb{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:5px}
 .cn{font-size:12.5px;font-weight:600;line-height:1.3}
 .cc,.cd{font-size:11px;color:var(--mt)}
 .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
 .badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px}
-.bn{background:rgba(79,125,255,.15);color:var(--ac)}.bw{background:rgba(255,107,53,.15);color:var(--ac2)}.bok{background:rgba(46,204,113,.12);color:var(--ok)}
-.obs-preview{margin-top:6px;font-size:11px;color:var(--w);font-style:italic;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bn{background:rgba(79,125,255,.15);color:var(--ac)}.bw{background:rgba(255,107,53,.15);color:var(--ac2)}.bok{background:rgba(46,204,113,.12);color:var(--ok)}.by{background:rgba(245,166,35,.12);color:var(--w)}
+.obs-prev{margin-top:6px;font-size:11px;color:var(--w);font-style:italic;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .loading{text-align:center;padding:60px;color:var(--mt);font-size:14px;grid-column:1/-1}
-
 /* DETALHE */
-#detailView{display:none;max-width:1400px;margin:0 auto;padding:16px 16px 40px}
-.dbk{background:var(--s2);border:1px solid var(--bd);border-radius:8px;color:var(--mt);padding:7px 14px;cursor:pointer;font-size:13px;margin-bottom:16px;display:inline-flex;align-items:center;gap:6px}
+#detailView{display:none;max-width:1000px;margin:0 auto;padding:16px 16px 60px}
+.dbk{display:inline-flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;color:var(--mt);padding:8px 16px;cursor:pointer;font-size:13px;margin-bottom:16px;transition:all .2s}
 .dbk:hover{border-color:var(--ac);color:var(--ac)}
 .dcard{background:var(--s);border:1px solid var(--bd);border-radius:14px;overflow:hidden}
-.dh{background:linear-gradient(135deg,#0d1220,#1a2040);padding:20px 24px}
-.dh h1{font-size:20px;font-weight:700;margin-bottom:4px}
-.dh p{font-size:13px;color:var(--mt)}
-.db{padding:20px 24px;display:flex;flex-direction:column;gap:22px}
-.sec-title{font-size:11px;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.6px;padding-bottom:8px;border-bottom:1px solid var(--bd);margin-bottom:12px}
-.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
-.ibox{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:10px 12px}
+.dh{background:linear-gradient(135deg,#0d1220,#1a2040);padding:22px 26px}
+.dh h1{font-size:21px;font-weight:700;line-height:1.2;margin-bottom:6px}
+.dh-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.dh-tag{font-size:11px;background:rgba(79,125,255,.2);color:var(--ac);padding:3px 10px;border-radius:20px;font-weight:600}
+.dh-tag.g{background:rgba(46,204,113,.15);color:var(--ok)}
+.dh-tag.y{background:rgba(245,166,35,.15);color:var(--w)}
+.dh-tag.r{background:rgba(255,107,53,.15);color:var(--ac2)}
+.db{padding:22px 26px;display:flex;flex-direction:column;gap:24px}
+.sec{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:16px}
+.sec-title{font-size:11px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.sec-title::before{content:'';display:block;width:3px;height:14px;background:var(--ac);border-radius:2px}
+.ig{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.ib{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px}
 .il{font-size:10px;color:var(--mt);margin-bottom:3px}
-.iv{font-size:13px;font-weight:600}.iv.ok{color:var(--ok)}.iv.warn{color:var(--ac2)}.iv.ac{color:var(--ac)}
-.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
-.iitem{border-radius:8px;overflow:hidden;border:1px solid var(--bd);background:var(--s2);position:relative}
-.iitem img{width:100%;height:110px;object-fit:cover;display:block;cursor:zoom-in;transition:opacity .2s}
-.iitem img:hover{opacity:.8}
-.itipo{font-size:9px;color:var(--mt);padding:3px 7px;background:rgba(0,0,0,.5);position:absolute;bottom:0;left:0;right:0}
-.obs-box-d{width:100%;background:var(--bg);border:1px solid var(--bd);border-radius:8px;color:var(--t);padding:10px 12px;font-size:13px;min-height:80px;resize:vertical;outline:none;font-family:inherit;line-height:1.5;transition:border-color .2s}
-.obs-box-d:focus{border-color:var(--w)}
-.obs-box-d::placeholder{color:#3a4a66}
-.oact{display:flex;gap:8px;margin-top:8px;align-items:center}
-.bsv{background:var(--ac);color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-weight:600;cursor:pointer}
-.bsv:disabled{opacity:.4}
-.bclr{background:var(--s2);color:var(--mt);border:1px solid var(--bd);border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer}
-.bclr:hover{border-color:#e74c3c;color:#e74c3c}
+.iv{font-size:13px;font-weight:600;color:var(--t);word-break:break-word}
+.iv.ok{color:var(--ok)}.iv.warn{color:var(--ac2)}.iv.ac{color:var(--ac)}.iv.y{color:var(--w)}
+.iv.sm{font-size:12px;font-weight:400}
+.bool-true{color:var(--ok)}.bool-false{color:var(--mt)}
+/* links */
+.links-row{display:flex;gap:8px;flex-wrap:wrap}
+.lnk{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:6px 12px;font-size:12px;color:var(--ac);text-decoration:none;transition:border-color .2s}
+.lnk:hover{border-color:var(--ac)}
+/* observações */
+.obs-ta{width:100%;background:var(--bg);border:1px solid var(--bd);border-radius:8px;color:var(--t);padding:10px 12px;font-size:13px;min-height:90px;resize:vertical;outline:none;font-family:inherit;line-height:1.6;transition:border-color .2s}
+.obs-ta:focus{border-color:var(--w)}
+.obs-ta::placeholder{color:#3a4a66}
+.obs-act{display:flex;gap:8px;margin-top:8px;align-items:center}
+.bsv{background:var(--ac);color:#fff;border:none;border-radius:7px;padding:8px 20px;font-size:12px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.bsv:disabled{opacity:.45}
+.bclr2{background:var(--s);color:var(--mt);border:1px solid var(--bd);border-radius:7px;padding:8px 12px;font-size:12px;cursor:pointer}
+.bclr2:hover{border-color:#e74c3c;color:#e74c3c}
 .ost{font-size:11px;color:var(--mt)}.ost.ok{color:var(--ok)}.ost.er{color:#e74c3c}
-
-/* LIGHTBOX */
-.lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:300;align-items:center;justify-content:center}
+/* galeria */
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px}
+.img-item{border-radius:8px;overflow:hidden;border:1px solid var(--bd);background:var(--bg);position:relative}
+.img-item img{width:100%;height:115px;object-fit:cover;display:block;cursor:zoom-in;transition:transform .2s}
+.img-item:hover img{transform:scale(1.03)}
+.img-label{font-size:9px;color:var(--mt);padding:3px 6px;position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.65)}
+/* lightbox */
+.lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:400;align-items:center;justify-content:center;cursor:zoom-out}
 .lb.open{display:flex}
-.lb img{max-width:95vw;max-height:92vh;object-fit:contain;border-radius:6px}
-.lbx{position:fixed;top:14px;right:18px;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;cursor:pointer;border-radius:8px;padding:2px 12px;z-index:301}
+.lb img{max-width:95vw;max-height:92vh;object-fit:contain;border-radius:6px;cursor:default}
+.lbx{position:fixed;top:14px;right:18px;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:22px;cursor:pointer;border-radius:8px;padding:2px 12px;z-index:401}
 </style>
 </head>
 <body>
 <header>
   <div class="hi">
     <div class="logo" onclick="showList()">Zona Leste <span>Imóveis</span></div>
-    <div style="font-size:11px;color:var(--mt)" id="hSub">Auditoria · clique no card para ver detalhes completos</div>
+    <div style="font-size:11px;color:var(--mt)" id="hSub">Auditoria · clique no card para ver todas as informações</div>
     <div class="hstats">
       <div><div class="hn" id="sT">—</div><div class="hl">total</div></div>
       <div><div class="hn" id="sO" style="color:var(--w)">—</div><div class="hl">com obs</div></div>
@@ -88,7 +101,6 @@ input:focus,select:focus{border-color:var(--ac)}
   </div>
 </header>
 
-<!-- LISTA -->
 <div id="listView">
   <div class="ctrl">
     <input type="text" id="qS" placeholder="🔍  Nome, construtora, bairro..." oninput="flt()">
@@ -104,19 +116,21 @@ input:focus,select:focus{border-color:var(--ac)}
   <div class="grid" id="grid"><div class="loading">Carregando empreendimentos…</div></div>
 </div>
 
-<!-- DETALHE -->
 <div id="detailView">
   <button class="dbk" onclick="showList()">← Voltar à lista</button>
   <div class="dcard">
-    <div class="dh"><h1 id="dNome"></h1><p id="dSub"></p></div>
+    <div class="dh">
+      <h1 id="dNome">—</h1>
+      <div style="font-size:13px;color:var(--mt);margin-top:2px" id="dSub"></div>
+      <div class="dh-meta" id="dTags"></div>
+    </div>
     <div class="db" id="dBody"></div>
   </div>
 </div>
 
-<!-- LIGHTBOX -->
 <div class="lb" id="lb" onclick="closeLB()">
   <button class="lbx" onclick="closeLB()">×</button>
-  <img id="lbImg" src="" alt="">
+  <img id="lbImg" src="" alt="" onclick="event.stopPropagation()">
 </div>
 
 <script>
@@ -125,26 +139,23 @@ const K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6In
 const H={apikey:K,Authorization:'Bearer '+K};
 let all=[],af={p:false,f:false};
 
-function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function fmt(n){return n?'R$ '+Number(n).toLocaleString('pt-BR'):'—';}
+function e(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function v(val){return (val===null||val===undefined||val==='')?'—':val;}
+function brl(n){return n?'R$ '+Number(n).toLocaleString('pt-BR',{minimumFractionDigits:0}):'—';}
+function bool(b){return b?'<span class="bool-true">✓ Sim</span>':'<span class="bool-false">Não</span>';}
+function ib(label,val,cls=''){return val&&val!=='—'?'<div class="ib"><div class="il">'+e(label)+'</div><div class="iv'+(cls?' '+cls:'')+'">'+(typeof val==='string'?e(val):val)+'</div></div>':'';}
 
 async function load(){
-  const SELECT='id,nome,construtora,incorporadora,bairro,bairro_comercial,status,programa,observacao,'
-    +'area_min_m2,area_max_m2,tipo_min_quartos,tipo_max_quartos,num_suites_max,'
-    +'preco_min,preco_max,preco_m2_min,preco_m2_max,condominio_estimado,'
-    +'total_unidades,num_torres,num_pavimentos,aptos_por_andar,num_vagas_min,num_vagas_max,'
-    +'data_lancamento,previsao_entrega,estagio_linha_tempo,fase_obra_pct,'
-    +'tem_varanda,tem_studio,tem_tour_virtual,aceita_fgts,aceita_financiamento,'
-    +'enquadrado_mcmv,faixa_mcmv,url_video_youtube,url_apto_vc,diferenciais_apto,'
-    +'logradouro,numero,cep,latitude,longitude,dist_metro_metros,nome_metro_proximo';
-
   const [re,ri,rc]=await Promise.all([
-    fetch(SB+'/rest/v1/empreendimentos?ativo=eq.true&select='+SELECT+'&order=nome',{headers:H}),
+    fetch(SB+'/rest/v1/empreendimentos?ativo=eq.true&select=*&order=nome',{headers:H}),
     fetch(SB+'/rest/v1/empreendimento_imagens?ativo=eq.true&select=empreendimento_id,tipo',{headers:{...H,'Range':'0-9999'}}),
     fetch(SB+'/rest/v1/empreendimento_imagens?ativo=eq.true&tipo=in.(fachada,perspectiva_3d)&select=empreendimento_id,url&order=ordem',{headers:{...H,'Range':'0-9999'}})
   ]);
   const emps=await re.json(),imgs=await ri.json(),caps=await rc.json();
-  if(!Array.isArray(emps)){console.error('Erro ao carregar:',emps);document.getElementById('grid').innerHTML='<div class="loading" style="color:#e74c3c">Erro ao carregar: '+(emps.message||JSON.stringify(emps))+'</div>';return;}
+  if(!Array.isArray(emps)){
+    document.getElementById('grid').innerHTML='<div class="loading" style="color:#e74c3c">Erro: '+(emps.message||JSON.stringify(emps))+'</div>';
+    return;
+  }
   const st={},cm={};
   imgs.forEach(i=>{if(!st[i.empreendimento_id])st[i.empreendimento_id]={t:0,f:0};st[i.empreendimento_id].t++;if(['fachada','perspectiva_3d'].includes(i.tipo))st[i.empreendimento_id].f++;});
   caps.forEach(c=>{if(!cm[c.empreendimento_id])cm[c.empreendimento_id]=c.url;});
@@ -157,7 +168,7 @@ function render(){
   const q=document.getElementById('qS').value.toLowerCase();
   const fo=document.getElementById('qO').value;
   const sh=all.filter(emp=>{
-    if(q&&!(emp.nome+' '+emp.construtora+' '+emp.bairro).toLowerCase().includes(q))return false;
+    if(q&&!(emp.nome+' '+emp.construtora+' '+emp.bairro+' '+emp.bairro_comercial).toLowerCase().includes(q))return false;
     if(fo==='com'&&!(emp.observacao&&emp.observacao.trim()))return false;
     if(fo==='sem'&&(emp.observacao&&emp.observacao.trim()))return false;
     if(af.p&&emp.total>=6)return false;
@@ -174,15 +185,15 @@ function render(){
     const img=emp.capa?'<img class="ci" src="'+e(emp.capa)+'" loading="lazy" alt="">':'<div class="cp">🏗</div>';
     const bn=emp.total<6?'<span class="badge bw">⚠ '+emp.total+' fotos</span>':'<span class="badge bn">'+emp.total+' fotos</span>';
     const bf=emp.fach===0?'<span class="badge bw">Sem fachada</span>':'<span class="badge bok">🏢 '+emp.fach+'</span>';
-    const op=ho?'<div class="obs-preview">💬 '+e(emp.observacao.trim())+'</div>':'';
+    const bp=emp.programa?'<span class="badge by">'+e(emp.programa)+'</span>':'';
+    const op=ho?'<div class="obs-prev">💬 '+e(emp.observacao.trim())+'</div>':'';
     return '<div class="card'+(ho?' obs':'')+'" onclick="openDetail(\''+emp.id+'\')">'+img
       +'<div class="cb"><div class="cn">'+e(emp.nome)+'</div>'
-      +'<div class="cc">'+e(emp.construtora)+'</div>'
-      +'<div class="cd">📍 '+e(emp.bairro||'—')+'</div>'
-      +'<div class="badges">'+bn+bf+'</div>'+op+'</div></div>';
+      +'<div class="cc">'+e(emp.construtora)+(emp.incorporadora&&emp.incorporadora!==emp.construtora?' / '+e(emp.incorporadora):'')+'</div>'
+      +'<div class="cd">📍 '+e(emp.bairro_comercial||emp.bairro||'—')+'</div>'
+      +'<div class="badges">'+bn+bf+bp+'</div>'+op+'</div></div>';
   }).join('');
 }
-
 function flt(){render();}
 function tgl(k){af[k]=!af[k];document.getElementById(k==='p'?'bP':'bF').classList.toggle('on',af[k]);render();}
 
@@ -191,12 +202,22 @@ async function openDetail(id){
   if(!emp)return;
   document.getElementById('listView').style.display='none';
   document.getElementById('detailView').style.display='block';
-  document.getElementById('hSub').textContent='← clique no logo para voltar';
-  document.getElementById('dNome').textContent=emp.nome;
-  document.getElementById('dSub').textContent=(emp.construtora||'')+(emp.bairro?' · 📍 '+emp.bairro:'');
-  const body=document.getElementById('dBody');
-  body.innerHTML='<div style="color:var(--mt);font-size:13px">Carregando imagens…</div>';
+  document.getElementById('hSub').textContent='← clique no logo para voltar à lista';
   window.scrollTo(0,0);
+
+  document.getElementById('dNome').textContent=emp.nome;
+  document.getElementById('dSub').textContent=(emp.construtora||'')+(emp.incorporadora&&emp.incorporadora!==emp.construtora?' / '+emp.incorporadora:'')+'  ·  📍 '+(emp.logradouro||'')+(emp.numero?', '+emp.numero:'')+(emp.bairro?'  ·  '+emp.bairro:'')+'  —  '+emp.cidade+'/'+emp.estado+(emp.cep?'  ·  CEP '+emp.cep:'');
+
+  // Tags do header
+  const tags=[];
+  if(emp.status)tags.push(['dh-tag',emp.status.replace(/_/g,' ').toUpperCase()]);
+  if(emp.programa)tags.push(['dh-tag y',emp.programa]);
+  if(emp.selo)tags.push(['dh-tag',emp.selo]);
+  if(emp.padrao)tags.push(['dh-tag',emp.padrao.toUpperCase()]);
+  if(emp.enquadrado_mcmv)tags.push(['dh-tag g','MCMV '+(emp.faixa_mcmv||'')]);
+  if(emp.codigo_referencia)tags.push(['dh-tag','Ref: '+emp.codigo_referencia]);
+  document.getElementById('dTags').innerHTML=tags.map(([c,t])=>'<span class="'+c+'">'+e(t)+'</span>').join('');
+  document.getElementById('dBody').innerHTML='<div style="color:var(--mt);font-size:13px;padding:20px 0">Carregando imagens…</div>';
 
   // Buscar imagens
   const r=await fetch(SB+'/rest/v1/empreendimento_imagens?empreendimento_id=eq.'+id+'&ativo=eq.true&select=url,tipo,ordem&order=ordem',{headers:H});
@@ -206,94 +227,166 @@ async function openDetail(id){
   const nInt=imgs.filter(i=>i.tipo==='interiores').length;
   const nPla=imgs.filter(i=>i.tipo==='planta').length;
 
-  // Montar info boxes
-  const infos=[
-    ['Total de fotos', emp.total+(emp.total<6?' ⚠':''), emp.total<6?'warn':'ok'],
-    ['Fachada/3D', nFach, nFach===0?'warn':'ac'],
-    ['Lazer', nLaz, 'ac'],
-    ['Interiores', nInt, 'ac'],
-    ['Plantas', nPla, 'ac'],
-    emp.status?['Status', emp.status,'']:null,
-    emp.programa?['Programa', emp.programa,'']:null,
-    emp.area_min_m2?['Área', emp.area_min_m2+(emp.area_max_m2&&emp.area_max_m2!==emp.area_min_m2?' – '+emp.area_max_m2:'')+'m²','']:null,
-    emp.tipo_min_quartos?['Quartos', emp.tipo_min_quartos+(emp.tipo_max_quartos&&emp.tipo_max_quartos!==emp.tipo_min_quartos?' – '+emp.tipo_max_quartos:''),'']:null,
-    emp.num_suites_max?['Suítes (máx)', emp.num_suites_max,'']:null,
-    emp.preco_min?['Preço min', fmt(emp.preco_min),'']:null,
-    emp.preco_max?['Preço máx', fmt(emp.preco_max),'']:null,
-    emp.preco_m2_min?['R$/m² min', fmt(emp.preco_m2_min),'']:null,
-    emp.condominio_estimado?['Condomínio est.', fmt(emp.condominio_estimado),'']:null,
-    emp.total_unidades?['Total unidades', emp.total_unidades,'']:null,
-    emp.num_torres?['Torres', emp.num_torres,'']:null,
-    emp.num_pavimentos?['Pavimentos', emp.num_pavimentos,'']:null,
-    emp.num_vagas_min!=null?['Vagas', emp.num_vagas_min+(emp.num_vagas_max&&emp.num_vagas_max!==emp.num_vagas_min?' – '+emp.num_vagas_max:''),'']:null,
-    emp.data_lancamento?['Lançamento', emp.data_lancamento,'']:null,
-    emp.previsao_entrega?['Previsão entrega', emp.previsao_entrega,'']:null,
-    emp.fase_obra_pct!=null?['Obra', emp.fase_obra_pct+'%','']:null,
-    emp.dist_metro_metros?['Metrô', emp.nome_metro_proximo+' ('+Math.round(emp.dist_metro_metros)+'m)','']:null,
-    emp.aceita_fgts?['FGTS', emp.aceita_fgts?'✓':'—','']:null,
-    emp.enquadrado_mcmv?['MCMV', emp.faixa_mcmv||'Sim','']:null,
-  ].filter(Boolean);
-
-  const infoHTML='<div><div class="sec-title">Informações</div><div class="info-grid">'
-    +infos.map(([l,v,c])=>'<div class="ibox"><div class="il">'+e(l)+'</div><div class="iv'+(c?' '+c:'')+'">'+e(v)+'</div></div>').join('')
+  // ── SECÇÃO: Resumo de imagens ──
+  const secImgStats='<div class="sec"><div class="sec-title">📷 Imagens</div><div class="ig">'
+    +ib('Total ativo',emp.total+(emp.total<6?' ⚠':''),emp.total<6?'warn':'ok')
+    +ib('Fachada / 3D',nFach,nFach===0?'warn':'ac')
+    +ib('Lazer',nLaz,'ac')
+    +ib('Interiores',nInt,'ac')
+    +ib('Plantas',nPla,'ac')
     +'</div></div>';
 
-  // Diferenciais
-  let difHTML='';
-  if(emp.diferenciais_apto){
-    difHTML='<div><div class="sec-title">Diferenciais do apartamento</div><div style="font-size:12px;color:var(--t);line-height:1.7">'+e(emp.diferenciais_apto)+'</div></div>';
-  }
+  // ── SECÇÃO: Preços ──
+  const secPrecos='<div class="sec"><div class="sec-title">💰 Preços e Financiamento</div><div class="ig">'
+    +ib('Preço mínimo',brl(emp.preco_min))
+    +ib('Preço máximo',brl(emp.preco_max))
+    +ib('R$/m² mínimo',brl(emp.preco_m2_min))
+    +ib('R$/m² máximo',brl(emp.preco_m2_max))
+    +ib('Condomínio estimado',brl(emp.condominio_estimado))
+    +ib('IPTU estimado/ano',brl(emp.iptu_estimado_anual))
+    +ib('Aceita FGTS',bool(emp.aceita_fgts))
+    +ib('Aceita financiamento',bool(emp.aceita_financiamento))
+    +ib('Bancos',v(emp.bancos_financiamento),'sm')
+    +'</div></div>';
 
-  // Links
-  const links=[
-    emp.url_apto_vc?['apto.vc',emp.url_apto_vc]:null,
-    emp.url_video_youtube?['Vídeo YouTube',emp.url_video_youtube]:null,
-  ].filter(Boolean);
-  let linksHTML='';
-  if(links.length){
-    linksHTML='<div><div class="sec-title">Links</div><div style="display:flex;gap:8px;flex-wrap:wrap">'
-      +links.map(([l,u])=>'<a href="'+e(u)+'" target="_blank" style="background:var(--s2);border:1px solid var(--bd);border-radius:7px;padding:6px 12px;font-size:12px;color:var(--ac);text-decoration:none">🔗 '+e(l)+'</a>').join('')
-      +'</div></div>';
-  }
+  // ── SECÇÃO: Características ──
+  const quartos=emp.tipo_min_quartos?(emp.tipo_min_quartos==emp.tipo_max_quartos?emp.tipo_min_quartos+'Q':emp.tipo_min_quartos+'–'+emp.tipo_max_quartos+'Q'):'—';
+  const area=emp.area_min_m2?(emp.area_min_m2==emp.area_max_m2?emp.area_min_m2+'m²':emp.area_min_m2+'–'+emp.area_max_m2+'m²'):'—';
+  const vagas=emp.num_vagas_min!=null?(emp.num_vagas_min==emp.num_vagas_max?emp.num_vagas_min+'vg':emp.num_vagas_min+'–'+emp.num_vagas_max+'vg'):'—';
+  const secCarac='<div class="sec"><div class="sec-title">🏠 Características do Apartamento</div><div class="ig">'
+    +ib('Área',area)
+    +ib('Quartos',quartos)
+    +ib('Suítes (máx)',v(emp.num_suites_max))
+    +ib('Banheiros (máx)',v(emp.num_banheiros_max))
+    +ib('Vagas',vagas)
+    +ib('Varanda',bool(emp.tem_varanda))
+    +ib('Studio',bool(emp.tem_studio))
+    +ib('Depósito',bool(emp.tem_deposito))
+    +ib('Armário embutido',bool(emp.tem_armario_embutido))
+    +ib('Infra ar-cond.',bool(emp.infra_ar_condicionado))
+    +ib('Aquec. central gás',bool(emp.aquecimento_central_gas))
+    +ib('Fechadura biométrica',bool(emp.fechadura_biometrica))
+    +ib('Tomada USB',bool(emp.tomada_usb))
+    +ib('Persiana de enrolar',bool(emp.persiana_enrolar))
+    +ib('Vaso dual flush',bool(emp.vaso_dual_flush))
+    +ib('Marca dos metais',v(emp.marca_metais))
+    +ib('Piso',v(emp.acabamento_piso))
+    +ib('Banheiro',v(emp.acabamento_banheiro))
+    +(emp.diferenciais_apto?'<div class="ib" style="grid-column:1/-1"><div class="il">Diferenciais do apto</div><div class="iv sm">'+e(emp.diferenciais_apto)+'</div></div>':'')
+    +'</div></div>';
 
-  // Galeria por tipo
-  const TIPOS={fachada:'Fachada / Exterior',perspectiva_3d:'Perspectiva 3D',lazer:'Áreas de Lazer',interiores:'Interiores',planta:'Plantas Baixas'};
+  // ── SECÇÃO: Empreendimento ──
+  const secEmp='<div class="sec"><div class="sec-title">🏗 Empreendimento</div><div class="ig">'
+    +ib('Total de unidades',v(emp.total_unidades))
+    +ib('Torres',v(emp.num_torres))
+    +ib('Pavimentos',v(emp.num_pavimentos))
+    +ib('Aptos/andar',v(emp.aptos_por_andar))
+    +ib('Elevadores',v(emp.num_elevadores))
+    +ib('Área do terreno',emp.area_terreno_m2?emp.area_terreno_m2+'m²':'—')
+    +ib('Área de lazer',emp.area_lazer_m2?emp.area_lazer_m2+'m²':'—')
+    +ib('Itens de lazer',v(emp.num_itens_lazer))
+    +ib('Rooftop',bool(emp.rooftop))
+    +ib('Heliponto',bool(emp.heliponto))
+    +ib('Piscina coberta',bool(emp.piscina_coberta))
+    +ib('Tour virtual',bool(emp.tem_tour_virtual))
+    +ib('Cert. ambiental',v(emp.certificacao_ambiental))
+    +ib('Sistema construtivo',v(emp.sistema_construtivo),'sm')
+    +ib('Arquiteto',v(emp.arquiteto))
+    +ib('Paisagista',v(emp.paisagista))
+    +ib('Decorador',v(emp.decorador))
+    +'</div></div>';
+
+  // ── SECÇÃO: Linha do tempo ──
+  const secTimeline='<div class="sec"><div class="sec-title">📅 Linha do Tempo</div><div class="ig">'
+    +ib('Status',v(emp.status))
+    +ib('Etapa',v(emp.estagio_linha_tempo))
+    +ib('Fase obra',emp.fase_obra_pct!=null?emp.fase_obra_pct+'%':'—',emp.fase_obra_pct>=50?'ok':'ac')
+    +ib('Lançamento',v(emp.data_lancamento))
+    +ib('Início obras',v(emp.data_inicio_obras))
+    +ib('Previsão entrega',v(emp.previsao_entrega))
+    +ib('Entrega',v(emp.mes_entrega))
+    +ib('Ult. atualização',v(emp.data_atualizacao_anuncio))
+    +'</div></div>';
+
+  // ── SECÇÃO: Localização ──
+  const secLoc='<div class="sec"><div class="sec-title">📍 Localização</div><div class="ig">'
+    +ib('Endereço',v(emp.logradouro)+(emp.numero?', '+emp.numero:''),'sm')
+    +ib('Bairro',v(emp.bairro))
+    +ib('Bairro comercial',v(emp.bairro_comercial))
+    +ib('Subprefeitura',v(emp.subprefeitura))
+    +ib('CEP',v(emp.cep))
+    +ib('Metrô próximo',emp.nome_metro_proximo?(emp.nome_metro_proximo+(emp.dist_metro_metros?' ('+emp.dist_metro_metros+'m)':'')):'—')
+    +ib('Linha metro',v(emp.linha_metro))
+    +ib('Ônibus próximo',emp.ponto_onibus_proximo?(emp.ponto_onibus_proximo+(emp.dist_onibus_metros?' ('+emp.dist_onibus_metros+'m)':'')):'—')
+    +ib('Shopping próximo',emp.nome_shopping_proximo?(emp.nome_shopping_proximo+(emp.dist_shopping_metros?' ('+emp.dist_shopping_metros+'m)':'')):'—')
+    +ib('Lat/Long',emp.latitude?emp.latitude+', '+emp.longitude:'—','sm')
+    +(emp.pontos_interesse?'<div class="ib" style="grid-column:1/-1"><div class="il">Pontos de interesse</div><div class="iv sm">'+e(emp.pontos_interesse)+'</div></div>':'')
+    +'</div></div>';
+
+  // ── SECÇÃO: Registro ──
+  const secReg='<div class="sec"><div class="sec-title">📋 Dados Legais</div><div class="ig">'
+    +ib('CNPJ incorporadora',v(emp.cnpj_incorporadora),'sm')
+    +ib('Registro incorporação',v(emp.registro_incorporacao),'sm')
+    +ib('Cartório RI',v(emp.cartorio_ri),'sm')
+    +ib('Matrícula terreno',v(emp.matricula_terreno),'sm')
+    +ib('Código ref.',v(emp.codigo_referencia))
+    +ib('Fonte dados',v(emp.fonte_dados),'sm')
+    +'</div></div>';
+
+  // ── SECÇÃO: Observações do banco ──
+  const secObsBanco=emp.observacoes?'<div class="sec"><div class="sec-title">📝 Notas técnicas (banco)</div><div style="font-size:12px;color:var(--t);line-height:1.7">'+e(emp.observacoes)+'</div></div>':'';
+
+  // ── SECÇÃO: Links ──
+  const linksList=[
+    [emp.url_apto_vc,'apto.vc'],
+    [emp.url_lopes,'Lopes'],
+    [emp.url_zap,'ZAP Imóveis'],
+    [emp.url_vivareal,'Viva Real'],
+    [emp.url_segundo_imovel,'Segundo Imóvel'],
+    [emp.url_incorporadora,'Site incorporadora'],
+    [emp.url_video_youtube,'Vídeo YouTube'],
+    [emp.url_stand_vendas,'Stand de vendas'],
+  ].filter(([u])=>u&&!u.includes('google.com/search'));
+  const secLinks=linksList.length?'<div class="sec"><div class="sec-title">🔗 Links</div><div class="links-row">'
+    +linksList.map(([u,l])=>'<a class="lnk" href="'+e(u)+'" target="_blank">🔗 '+e(l)+'</a>').join('')
+    +'</div></div>':'';
+
+  // ── SECÇÃO: Observação de auditoria (editável) ──
+  const secObs='<div class="sec"><div class="sec-title" style="--ac:var(--w)">💬 Observação de auditoria</div>'
+    +'<textarea class="obs-ta" id="obsTA" placeholder="Descreva o que está errado ou precisa ser corrigido neste empreendimento…">'+e(emp.observacao||'')+'</textarea>'
+    +'<div class="obs-act">'
+    +'<button class="bsv" id="bsvBtn" onclick="saveObs(\''+id+'\')">💾 Salvar observação</button>'
+    +'<button class="bclr2" onclick="clrObs(\''+id+'\')">Limpar</button>'
+    +'<span class="ost" id="ostMsg"></span>'
+    +'</div></div>';
+
+  // ── GALERIA ──
+  const TIPOS=[['fachada','🏢 Fachada / Exterior'],['perspectiva_3d','🖼 Perspectiva 3D'],['lazer','🏊 Áreas de Lazer'],['interiores','🛋 Interiores'],['planta','📐 Plantas Baixas']];
   let galHTML='';
-  for(const [tipo,label] of Object.entries(TIPOS)){
+  for(const [tipo,label] of TIPOS){
     const list=imgs.filter(i=>i.tipo===tipo);
     if(!list.length)continue;
-    galHTML+='<div><div class="sec-title">'+label+' ('+list.length+')</div>'
+    galHTML+='<div class="sec"><div class="sec-title">'+label+' <span style="font-weight:400;color:var(--mt);font-size:10px;text-transform:none;letter-spacing:0">('+list.length+')</span></div>'
       +'<div class="img-grid">'
-      +list.map(i=>'<div class="iitem"><img src="'+e(i.url)+'" loading="lazy" onclick="openLB(\''+e(i.url)+'\')" alt="'+label+'"><div class="itipo">ord='+i.ordem+'</div></div>').join('')
+      +list.map(i=>'<div class="img-item"><img src="'+e(i.url)+'" loading="lazy" onclick="openLB(\''+e(i.url)+'\')" alt=""><div class="img-label">ord='+i.ordem+'</div></div>').join('')
       +'</div></div>';
   }
-  // Outros tipos
-  const outros=imgs.filter(i=>!Object.keys(TIPOS).includes(i.tipo));
+  const outros=imgs.filter(i=>!TIPOS.map(t=>t[0]).includes(i.tipo));
   if(outros.length){
-    galHTML+='<div><div class="sec-title">Outras ('+outros.length+')</div><div class="img-grid">'
-      +outros.map(i=>'<div class="iitem"><img src="'+e(i.url)+'" loading="lazy" onclick="openLB(\''+e(i.url)+'\')" alt=""><div class="itipo">'+i.tipo+' ord='+i.ordem+'</div></div>').join('')
+    galHTML+='<div class="sec"><div class="sec-title">📎 Outras imagens ('+outros.length+')</div><div class="img-grid">'
+      +outros.map(i=>'<div class="img-item"><img src="'+e(i.url)+'" loading="lazy" onclick="openLB(\''+e(i.url)+'\')" alt=""><div class="img-label">'+i.tipo+' ord='+i.ordem+'</div></div>').join('')
       +'</div></div>';
   }
-  if(!imgs.length) galHTML='<div style="color:var(--mt);font-size:13px">Nenhuma imagem ativa.</div>';
+  if(!imgs.length)galHTML='<div class="sec" style="color:var(--mt);font-size:13px">Nenhuma imagem ativa neste empreendimento.</div>';
 
-  // Observação
-  const obsHTML=`<div style="background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px">
-    <div class="sec-title">Observação / Problema a corrigir</div>
-    <textarea class="obs-box-d" id="obsTA" placeholder="Descreva o que está errado ou precisa ser corrigido…">${e(emp.observacao||'')}</textarea>
-    <div class="oact">
-      <button class="bsv" id="bsvBtn" onclick="saveObs('${id}')">💾 Salvar</button>
-      <button class="bclr" onclick="clrObs('${id}')">Limpar</button>
-      <span class="ost" id="ostMsg"></span>
-    </div>
-  </div>`;
-
-  body.innerHTML=infoHTML+difHTML+linksHTML+obsHTML+galHTML;
+  document.getElementById('dBody').innerHTML=
+    secImgStats+secObs+secPrecos+secCarac+secEmp+secTimeline+secLoc+secReg+secObsBanco+secLinks+galHTML;
 }
 
 function showList(){
   document.getElementById('detailView').style.display='none';
   document.getElementById('listView').style.display='';
-  document.getElementById('hSub').textContent='Auditoria · clique no card para ver detalhes completos';
+  document.getElementById('hSub').textContent='Auditoria · clique no card para ver todas as informações';
   window.scrollTo(0,0);
 }
 
@@ -308,15 +401,15 @@ async function saveObs(id){
     const emp=all.find(x=>x.id===id);
     if(emp)emp.observacao=txt;
     document.getElementById('sO').textContent=all.filter(x=>x.observacao&&x.observacao.trim()).length;
-    msg.className='ost ok';msg.textContent='✓ Salvo';
+    msg.className='ost ok';msg.textContent='✓ Salvo com sucesso';
     setTimeout(()=>{msg.textContent='';msg.className='ost';},3000);
   }catch(err){msg.className='ost er';msg.textContent='✗ '+err.message;}
-  finally{btn.disabled=false;btn.textContent='💾 Salvar';}
+  finally{btn.disabled=false;btn.textContent='💾 Salvar observação';}
 }
 function clrObs(id){document.getElementById('obsTA').value='';saveObs(id);}
 function openLB(url){document.getElementById('lbImg').src=url;document.getElementById('lb').classList.add('open');}
 function closeLB(){document.getElementById('lb').classList.remove('open');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLB();});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeLB();});
 load();
 </script>
 </body>
