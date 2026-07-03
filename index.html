@@ -76,6 +76,7 @@ select:hover,select:focus{border-color:var(--acc);outline:none;}
 .bm{background:rgba(52,211,153,.1);color:var(--grn);}
 .bd{background:rgba(251,191,36,.15);color:var(--yel);}
 .bg{background:var(--bdr);color:var(--dim);}
+.bo{background:rgba(96,165,250,.18);color:var(--blu);}
 .cno{font-size:14px;font-weight:700;line-height:1.3;margin-bottom:2px;}
 .cinc{font-size:11px;color:var(--dim);margin-bottom:7px;}
 .ctips{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px;}
@@ -276,6 +277,9 @@ code{font-family:'SF Mono',monospace;font-size:10px;background:var(--bdr);paddin
   <button class="fbtn" id="bmcmv">MCMV</button>
   <button class="fbtn" id="bdest">⭐ Destaque</button>
   <div class="fsep"></div>
+  <span class="fl">Observação</span>
+  <select id="fobs"><option value="">Todos</option><option value="com">📝 Com observação</option><option value="sem">Sem observação</option></select>
+  <div class="fsep"></div>
   <span class="fl">Ordenar</span>
   <select id="fo">
     <option value="nome">Nome A–Z</option>
@@ -394,7 +398,7 @@ function pop(id,vals){
 }
 
 // Events
-['search','fs','fb','fi','fp','fq','fpr','fo'].forEach(id=>q(id).addEventListener('input',applyF));
+['search','fs','fb','fi','fp','fq','fpr','fo','fobs'].forEach(id=>q(id).addEventListener('input',applyF));
 ['mcmv','dest'].forEach(k=>{
   const key=k;
   q('b'+key).addEventListener('click',()=>{
@@ -411,7 +415,7 @@ function clearSearch(){q('search').value='';q('scl').style.display='none';applyF
 
 function clearFilters(){
   q('search').value='';q('scl').style.display='none';
-  ['fs','fb','fi','fp','fq','fpr','fo'].forEach(id=>{q(id).selectedIndex=0;});
+  ['fs','fb','fi','fp','fq','fpr','fo','fobs'].forEach(id=>{q(id).selectedIndex=0;});
   F.mcmv=false;F.dest=false;
   q('bmcmv').classList.remove('on');q('bdest').classList.remove('on');
   applyF();
@@ -419,13 +423,13 @@ function clearFilters(){
 
 function hasFilters(){
   return q('search').value||q('fs').value||q('fb').value||q('fi').value||
-         q('fp').value||q('fq').value||q('fpr').value||F.mcmv||F.dest;
+         q('fp').value||q('fq').value||q('fpr').value||q('fobs').value||F.mcmv||F.dest;
 }
 
 function applyF(){
   const sr=q('search').value.toLowerCase().trim();
   const st=q('fs').value,ba=q('fb').value,inc=q('fi').value,
-        pr=q('fp').value,qts=q('fq').value,pri=q('fpr').value,so=q('fo').value;
+        pr=q('fp').value,qts=q('fq').value,pri=q('fpr').value,so=q('fo').value,obs=q('fobs').value;
 
   FILT=ALL.filter(e=>{
     if(sr&&!`${e.nome||''} ${e.incorporadora||''} ${e.construtora||''} ${e.bairro||''} ${e.bairro_comercial||''} ${e.logradouro||''}`.toLowerCase().includes(sr))return false;
@@ -435,6 +439,8 @@ function applyF(){
     if(pr&&e.programa!==pr)return false;
     if(F.mcmv&&!e.enquadrado_mcmv)return false;
     if(F.dest&&!e.destaque)return false;
+    if(obs==='com'&&!(e.observacao&&e.observacao.trim()))return false;
+    if(obs==='sem'&&e.observacao&&e.observacao.trim())return false;
     if(qts){
       const q2=parseInt(qts);
       if(q2===0){if(!e.tem_studio)return false;}
@@ -538,7 +544,7 @@ function cardH(e){
     return`<div class="card" data-id="${e.id}">
       ${imBlock}
       <div class="cb">
-        <div class="badges">${e.status?`<span class="badge ${sc(e.status)}">${e.status}</span>`:''}${e.enquadrado_mcmv?'<span class="badge bm">MCMV</span>':''}${e.destaque?'<span class="badge bd">⭐</span>':''}</div>
+        <div class="badges">${e.status?`<span class="badge ${sc(e.status)}">${e.status}</span>`:''}${e.enquadrado_mcmv?'<span class="badge bm">MCMV</span>':''}${e.destaque?'<span class="badge bd">⭐</span>':''}${e.observacao&&e.observacao.trim()?'<span class="badge bo">📝</span>':''}</div>
         <div class="cno">${e.nome}</div>
         <div class="cinc">${e.incorporadora||'—'} · ${e.bairro_comercial||e.bairro||'—'}</div>
         ${tipChips}
@@ -560,6 +566,7 @@ function cardH(e){
         ${e.enquadrado_mcmv?'<span class="badge bm">MCMV</span>':''}
         ${e.destaque?'<span class="badge bd">⭐</span>':''}
         ${e.padrao?`<span class="badge bg">${e.padrao}</span>`:''}
+        ${e.observacao&&e.observacao.trim()?'<span class="badge bo">📝 Observação</span>':''}
       </div>
       <div class="cno">${e.nome}</div>
       <div class="cinc">${e.incorporadora||'—'}</div>
