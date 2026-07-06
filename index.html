@@ -734,7 +734,7 @@ function modalBody(e,imgs,tips){
   </div>
 
   <div class="obs-sec">
-    <div class="sct">💬 Observações de auditoria</div>
+    <div class="sct">💬 Suas observações</div>
     <textarea class="obs-ta" id="obs-ta" placeholder="Descreva problemas, correções necessárias ou anotações sobre este empreendimento…">${(e.observacao||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
     <div class="obs-foot">
       <button class="obs-sv" id="obs-sv" onclick="saveObs('${e.id}')">💾 Salvar</button>
@@ -875,7 +875,7 @@ function modalBody(e,imgs,tips){
 
   ${ytId?`<div class="sec"><div class="sct">▶ Vídeo</div><iframe class="vembed" src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe></div>`:''}
   ${ext.length?`<div class="sec"><div class="sct">🔗 Links Externos</div><div class="mlinks">${ext.join('')}</div></div>`:''}
-  ${e.observacoes?`<div class="sec"><div class="sct">📝 Observações</div><div class="fld ful"><span class="v">${e.observacoes}</span></div></div>`:''}
+  ${e.observacoes?`<div class="sec"><div class="sct">🔍 Registro de pesquisa (Claude)</div><div class="fld ful"><span class="v">${e.observacoes}</span></div></div>`:''}
 
   <div class="mfoot">
     📷 ${imgs.length} foto${imgs.length!==1?'s':''}
