@@ -353,14 +353,15 @@ async function load(){
       sbFetch('empreendimento_tipologias',{select:'empreendimento_id,descricao,quartos,suites,area_m2,vagas,banheiros,tem_varanda,preco_a_partir',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'2000'}),
     ]);
 
-    // Carregar imagens em 3 lotes para cobrir as 2120+ imagens
-    const [ims1,ims2,ims3,ims4]=await Promise.all([
-      sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,ordem,is_capa,tipo',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'1000',offset:'0'}),
-      sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,ordem,is_capa,tipo',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'1000',offset:'1000'}),
-      sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,ordem,is_capa,tipo',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'1000',offset:'2000'}),
-      sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,ordem,is_capa,tipo',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'500',offset:'3000'}),
-    ]);
-    const ims=[...ims1,...ims2,...ims3,...ims4];
+    // Carregar TODAS as imagens em lotes de 1000, paginando até esgotar
+    // (dinâmico — não trunca conforme o catálogo cresce, ao contrário do limite fixo anterior)
+    let ims=[],imOffset=0;
+    while(true){
+      const batch=await sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,ordem,is_capa,tipo',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'1000',offset:String(imOffset)});
+      ims=ims.concat(batch);
+      if(batch.length<1000)break;
+      imOffset+=1000;
+    }
 
     IMGS={};
     ims.forEach(i=>{
