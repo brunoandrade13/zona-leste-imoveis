@@ -516,6 +516,32 @@ function renderP(){
 }
 window.go=p=>{PAGE=p;renderG();};
 
+// ── RENDA NECESSÁRIA PARA FINANCIAMENTO ──
+// Estimativa com base nas regras vigentes em 2026 do SFH/Caixa e das faixas do MCMV:
+// comprometimento máximo de 30% da renda bruta familiar sobre a 1ª parcela (tabela SAC).
+// Taxas/entradas/prazos são valores de referência por faixa — não substitui simulação bancária oficial.
+// Não considera eventual subsídio do governo nas Faixas 1 e 2, que reduziria a renda necessária.
+function financingParams(e){
+  const faixa=(e.faixa_mcmv||'').trim();
+  if(e.enquadrado_mcmv&&/faixa\s*1|^1$/i.test(faixa))return{entrada:.10,taxa:.045,meses:360};
+  if(e.enquadrado_mcmv&&/faixa\s*2|^2$/i.test(faixa))return{entrada:.10,taxa:.06,meses:360};
+  if(e.enquadrado_mcmv&&/faixa\s*3|^3$/i.test(faixa))return{entrada:.15,taxa:.08,meses:420};
+  if(e.enquadrado_mcmv&&/faixa\s*4|^4$/i.test(faixa))return{entrada:.20,taxa:.105,meses:420};
+  return{entrada:.20,taxa:.1119,meses:420}; // SBPE padrão (não enquadrado MCMV)
+}
+function rendaNecessaria(e){
+  const v=e.preco_min;
+  if(!v)return null;
+  const{entrada,taxa,meses}=financingParams(e);
+  const financiado=v*(1-entrada);
+  const taxaMensal=Math.pow(1+taxa,1/12)-1;
+  const amortizacao=financiado/meses;
+  const juros1=financiado*taxaMensal;
+  const parcela=amortizacao+juros1;
+  const seguro=Math.min(180,Math.max(40,v*0.00025));
+  const renda=(parcela+seguro)/0.30;
+  return Math.ceil(renda/100)*100;
+}
 function money(v){
   if(!v)return null;
   if(v>=1000000)return'R$\u00a0'+(v/1000000).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1})+'M';
@@ -553,6 +579,7 @@ function cardH(e){
           ${area?`<div class="ckv"><div class="k">Área</div><div class="v">${area}</div></div>`:''}
           ${qtos?`<div class="ckv"><div class="k">Dorm.</div><div class="v">${qtos}</div></div>`:''}
           ${e.previsao_entrega?`<div class="ckv"><div class="k">Entrega</div><div class="v">${dt(e.previsao_entrega)}</div></div>`:''}
+          ${rendaNecessaria(e)!=null?`<div class="ckv"><div class="k">Renda mín.*</div><div class="v">${money(rendaNecessaria(e))}</div></div>`:''}
         </div>
         <div class="cpri-inline">${money(e.preco_min)||'<span style="color:var(--fnt);font-size:11px">A consultar</span>'}</div>
       </div>
@@ -579,6 +606,7 @@ function cardH(e){
         ${e.total_unidades?`<div class="ckv"><div class="k">Unidades</div><div class="v">${e.total_unidades}</div></div>`:''}
         ${e.previsao_entrega?`<div class="ckv"><div class="k">Entrega</div><div class="v">${dt(e.previsao_entrega)}</div></div>`:''}
         ${e.fase_obra_pct!=null?`<div class="ckv"><div class="k">Obra</div><div class="v">${e.fase_obra_pct}%</div></div>`:''}
+        ${rendaNecessaria(e)!=null?`<div class="ckv"><div class="k">Renda mín.*</div><div class="v">${money(rendaNecessaria(e))}</div></div>`:''}
       </div>
     </div>
     <div class="cft">
@@ -751,7 +779,9 @@ function modalBody(e,imgs,tips){
     <div class="phi g"><div class="l">Dormitórios</div><div class="v">${e.tipo_min_quartos!==null?(e.tipo_min_quartos+(e.tipo_max_quartos&&e.tipo_max_quartos!==e.tipo_min_quartos?'–'+e.tipo_max_quartos:'')+(e.tem_studio?' + studio':'')):'—'}</div></div>
     <div class="phi"><div class="l">Preço/m²</div><div class="v">${e.preco_m2_min?money(e.preco_m2_min)+(e.preco_m2_max&&e.preco_m2_max!==e.preco_m2_min?' – '+money(e.preco_m2_max):''):'—'}</div></div>
     <div class="phi"><div class="l">Total unidades</div><div class="v">${e.total_unidades||'—'}</div></div>
+    <div class="phi g"><div class="l">Renda mínima estimada*</div><div class="v">${rendaNecessaria(e)!=null?money(rendaNecessaria(e))+'/mês':'—'}</div></div>
   </div>
+  ${rendaNecessaria(e)!=null?`<div style="color:var(--dim);font-size:10px;margin:-8px 0 12px 2px;line-height:1.4">* Estimativa de renda bruta familiar para comprometimento de até 30% na 1ª parcela (tabela SAC), considerando ${e.enquadrado_mcmv&&/faixa\s*[1-4]|^[1-4]$/i.test((e.faixa_mcmv||'').trim())?'as condições do MCMV '+(e.faixa_mcmv||'').trim():'financiamento SBPE padrão'} vigentes em 2026 (entrada, taxa e prazo de referência). Não considera eventual subsídio do governo nas Faixas 1 e 2, que reduziria a renda necessária. Não substitui simulação bancária oficial.</div>`:''}
 
   <div class="sec">
     <div class="sct">🏠 Tipologias <span style="color:var(--dim);font-weight:400;font-size:10px">${tips.length} opção${tips.length!==1?'ões':''}</span></div>
