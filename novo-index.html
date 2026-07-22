@@ -188,7 +188,7 @@
         <div style="display:inline-flex;margin-top:12px;padding:5px 14px;border-radius:999px;background:var(--card);border:1px solid var(--card-brd);color:var(--muted);font-size:12.5px;font-weight:600">Exemplos ilustrativos — ainda não são depoimentos reais de clientes</div>
       </div>
       <div id="stage2" style="position:relative;height:340px;margin-top:28px;perspective:1500px;cursor:grab;touch-action:pan-y;user-select:none">
-        <div id="track2" style="position:absolute;inset:0;transform-style:preserve-3d"></div>
+        <div id="track2" style="position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none"></div>
       </div>
     </section>
 
@@ -288,6 +288,8 @@ const TESTIMONIALS=[
 const T_COLORS=['#9E1B1B','#3B5B8C','#4C7A5B','#C9A227','#7A4C6B','#2F6D6A','#8C5A2B','#5B5B8C'];
 
 let EMPS=[];
+let CAROUSEL_EMPS=[]; // small curated subset shown in the 3D carousel (kept light on purpose)
+const CAROUSEL_MAX=20;
 const state={ theme:'light', screen:'home', currentId:null, sel:{}, tip2:{}, zoom:null, search:{bairro:'',quartos:'',faixa:''} };
 
 const q=id=>document.getElementById(id);
@@ -373,6 +375,7 @@ function processEmps(emps,tipsRaw,imgsRaw){
       difs,
       bairroTxt: mobSentence(e),
       urlVideo: youtubeEmbed(e.url_video_youtube),
+      destaque: !!e.destaque,
       tips: tips.sort((a,b)=>a.area-b.area),
     };
   });
@@ -380,7 +383,7 @@ function processEmps(emps,tipsRaw,imgsRaw){
 
 function filtered(){
   const {bairro,quartos,faixa}=state.search;
-  return EMPS.filter(e=>{
+  return CAROUSEL_EMPS.filter(e=>{
     if(bairro && e.bairro!==bairro) return false;
     if(quartos && !e.tips.some(t=> quartos==='3' ? t.quartos>=3 : t.quartos===+quartos)) return false;
     if(faixa){
@@ -442,7 +445,7 @@ function renderCarousel(){
 
   q('carrosselBody').innerHTML = `
     <div id="stage" data-reveal style="position:relative;height:560px;margin-top:30px;perspective:1600px;cursor:grab;touch-action:pan-y;user-select:none">
-      <div id="track" style="position:absolute;inset:0;transform-style:preserve-3d">${cardsHtml}</div>
+      <div id="track" style="position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none">${cardsHtml}</div>
     </div>
   `;
   stageEl=q('stage'); trackEl=q('track');
@@ -533,9 +536,31 @@ function bindCarouselDrag(){
   if(!stageEl) return;
   stageEl.onmouseenter=()=>{ pausedC=true; };
   stageEl.onmouseleave=()=>{ pausedC=false; };
-  stageEl.onpointerdown=e=>{ downC=true; movedC=false; startXC=e.clientX; lastXC=e.clientX; vel=0; stageEl.style.cursor='grabbing'; try{stageEl.setPointerCapture(e.pointerId);}catch(_){} };
-  stageEl.onpointermove=e=>{ if(!downC) return; const dx=e.clientX-lastXC; lastXC=e.clientX; if(Math.abs(e.clientX-startXC)>10){ movedC=true; if(state.zoom!=null){ const prevZoom=state.zoom; state.zoom=null; pulseCardTransition(); setZoomCta(prevZoom, filtered()); } } pos-=dx*0.005; vel=-dx*0.005; };
-  stageEl.onpointerup=()=>{ downC=false; stageEl.style.cursor='grab'; };
+  stageEl.onpointerdown=e=>{
+    downC=true; movedC=false; startXC=e.clientX; lastXC=e.clientX; vel=0;
+    stageEl.style.cursor='grabbing';
+    const onMove=ev=>{
+      if(!downC) return;
+      const dx=ev.clientX-lastXC; lastXC=ev.clientX;
+      if(Math.abs(ev.clientX-startXC)>10){
+        movedC=true;
+        if(state.zoom!=null){ const prevZoom=state.zoom; state.zoom=null; pulseCardTransition(); setZoomCta(prevZoom, filtered()); }
+      }
+      pos-=dx*0.005; vel=-dx*0.005;
+    };
+    const onUp=()=>{
+      downC=false; stageEl.style.cursor='grab';
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+    };
+    // Listen on document (not pointer capture) so dragging still works if the
+    // pointer leaves the stage, without retargeting the eventual 'click' away
+    // from the card (setPointerCapture would otherwise make the click fire
+    // on the stage element itself, so closest('[data-act]') never finds the
+    // card and clicking silently does nothing).
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  };
 }
 
 /* ---------------- ACTIONS ---------------- */
@@ -607,9 +632,13 @@ function renderTestimonials(){
 
   stage2El.onmouseenter=()=>{paused2=true;};
   stage2El.onmouseleave=()=>{paused2=false;};
-  stage2El.onpointerdown=e=>{down2=true;lastX2=e.clientX;vel2=0;stage2El.style.cursor='grabbing';try{stage2El.setPointerCapture(e.pointerId);}catch(_){}};
-  stage2El.onpointermove=e=>{if(!down2)return;const dx=e.clientX-lastX2;lastX2=e.clientX;pos2-=dx*0.005;vel2=-dx*0.005;};
-  stage2El.onpointerup=()=>{down2=false;stage2El.style.cursor='grab';};
+  stage2El.onpointerdown=e=>{
+    down2=true; lastX2=e.clientX; vel2=0; stage2El.style.cursor='grabbing';
+    const onMove=ev=>{ if(!down2) return; const dx=ev.clientX-lastX2; lastX2=ev.clientX; pos2-=dx*0.005; vel2=-dx*0.005; };
+    const onUp=()=>{ down2=false; stage2El.style.cursor='grab'; document.removeEventListener('pointermove',onMove); document.removeEventListener('pointerup',onUp); };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  };
 }
 function layoutTestimonials(){
   if(!track2El) return;
@@ -869,7 +898,15 @@ function tick(){
   }
   q('heroCount').textContent = EMPS.length;
 
-  const bairros=[...new Set(EMPS.map(e=>e.bairro))].sort();
+  // Curate the carousel subset: developments already flagged as "destaque"
+  // come first (this is the field Bruno can toggle later to pick exactly
+  // which ones show here); fill the rest up to CAROUSEL_MAX so the carousel
+  // isn't empty in the meantime.
+  const destaqueEmps = EMPS.filter(e=>e.destaque);
+  const restEmps = EMPS.filter(e=>!e.destaque);
+  CAROUSEL_EMPS = [...destaqueEmps, ...restEmps].slice(0, CAROUSEL_MAX);
+
+  const bairros=[...new Set(CAROUSEL_EMPS.map(e=>e.bairro))].sort();
   q('fBairro').innerHTML = '<option value="" style="color:#111">Todos os bairros</option>' + bairros.map(b=>`<option value="${esc(b)}" style="color:#111">${esc(b)}</option>`).join('');
 
   const heroVideo = q('heroVideo');
