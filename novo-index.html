@@ -606,7 +606,7 @@ const ACTIONS={
     if(state.zoom!=null) setZoomCta(state.zoom, list);
   },
   zoomClose(){ state.zoom=null; renderCarousel(); },
-  openEmp(t){ const id=t.dataset.id; state.screen='emp'; state.currentId=id; state.zoom=null; renderEmpScreen(); q('homeScreen').style.display='none'; q('empScreen').style.display='block'; window.scrollTo({top:0}); },
+  openEmp(t){ window.location.href='empreendimento.html?id='+encodeURIComponent(t.dataset.id); },
   selectTip(t){ const eid = filtered()[+t.dataset.idx]?.id; if(!eid) return; state.sel[eid]=+t.dataset.tip; renderCarousel(); },
   selectTip2(t){ state.tip2[state.currentId]=+t.dataset.tip; renderEmpScreen(); },
   noop(){},
@@ -790,7 +790,7 @@ function renderMap(){
     const icon=L.divIcon({className:'',iconSize:[0,0],html:'<div style="background:#9E1B1B;color:#fff;font:600 11px/1 sans-serif;padding:5px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:translate(-50%,-130%)">'+preco+'</div>'});
     const m=L.marker([e.lat,e.lng],{icon}).addTo(leafletMap);
     m.bindTooltip(e.nome,{direction:'top',offset:[0,-14]});
-    m.on('click',()=>{ state.screen='emp'; state.currentId=e.id; state.zoom=null; renderEmpScreen(); q('homeScreen').style.display='none'; q('empScreen').style.display='block'; window.scrollTo({top:0}); });
+    m.on('click',()=>{ window.location.href='empreendimento.html?id='+encodeURIComponent(e.id); });
   });
   setTimeout(()=>{ try{leafletMap.invalidateSize();}catch(_){} },250);
 }
@@ -928,6 +928,13 @@ function tick(){
 
 /* ---------------- BOOT ---------------- */
 (async function boot(){
+  // Old links used ?emp=<id> to open the (now retired) embedded detail
+  // screen — send those straight to the real dedicated page instead.
+  const legacyEmpId = new URLSearchParams(window.location.search).get('emp');
+  if(legacyEmpId){
+    window.location.replace('empreendimento.html?id='+encodeURIComponent(legacyEmpId));
+    return;
+  }
   try{
     EMPS = await loadAll();
   }catch(err){
@@ -961,12 +968,6 @@ function tick(){
   renderCompare();
   renderTestimonials();
   renderFooterBairros();
-
-  const empId = new URLSearchParams(window.location.search).get('emp');
-  if(empId && EMPS.some(e=>e.id===empId)){
-    state.screen='emp'; state.currentId=empId; renderEmpScreen();
-    q('homeScreen').style.display='none'; q('empScreen').style.display='block';
-  }
 
   q('loadOverlay').style.display='none';
   q('root').style.display='block';
