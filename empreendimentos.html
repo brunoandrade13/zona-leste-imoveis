@@ -90,7 +90,8 @@ const fmt=n=>'R$ '+Math.round(n).toLocaleString('pt-BR');
 const PLACEHOLDER_IMG='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="%23EDEBE6"/></svg>');
 
 let EMPS=[];
-const state={ theme:'light', view:'grade', openFilter:null, panelOpen:false, zoomId:null, listaF:{ status:'', bairro:'', quartos:'', faixa:'' } };
+const state={ theme:'light', view:'grade', openFilter:null, panelOpen:false, zoomId:null,
+  listaF:{ status:'', bairro:'', quartos:'', faixa:'', incorporadora:'', vagas:'', suites:'', area:'', mcmv:false, varanda:false, pertoMetro:false, amenities:[] } };
 
 async function sbFetch(path,params={}){
   const u=new URL(`${SB}/rest/v1/${path}`);
@@ -110,13 +111,42 @@ async function loadAll(){
     if(batch.length<1000)break;
     off+=1000;
   }
-  return processEmps(emps,tips,imgs);
+  let lazer=[],off2=0;
+  while(true){
+    const batch=await sbFetch('lazer',{select:'empreendimento_id,item',limit:'1000',offset:String(off2)});
+    lazer=lazer.concat(batch);
+    if(batch.length<1000)break;
+    off2+=1000;
+  }
+  return processEmps(emps,tips,imgs,lazer);
 }
 function pickImg(list,tipo){ const arr=list.filter(i=>i.tipo===tipo); return arr.length?arr[0].url:null; }
-function processEmps(emps,tipsRaw,imgsRaw){
-  const tipsBy={}, imgsBy={};
+
+// Curated amenity groups built from the (messy, free-text) `lazer` table —
+// several raw item names mean the same thing to a visitor (e.g. "Piscina",
+// "Piscina adulto" and "Piscina infantil" should all just mean "Piscina" as
+// a filter), so we group by pattern instead of using the raw strings.
+const AMENITY_GROUPS=[
+  {label:'Piscina', match:i=>/piscina/i.test(i)},
+  {label:'Academia', match:i=>/academia|fitness|cross training|espaço funcional/i.test(i)},
+  {label:'Salão de festas', match:i=>/sal[aã]o de festas/i.test(i)},
+  {label:'Playground / kids', match:i=>/playground|brinquedoteca|espaço kids/i.test(i)},
+  {label:'Espaço gourmet / churrasqueira', match:i=>/gourmet|churrasqueira/i.test(i)},
+  {label:'Coworking', match:i=>/coworking/i.test(i)},
+  {label:'Espaço pet', match:i=>/pet/i.test(i)},
+  {label:'Bicicletário', match:i=>/bicicletário/i.test(i)},
+  {label:'Salão de jogos', match:i=>/sal[aã]o de jogos/i.test(i)},
+  {label:'Sauna', match:i=>/sauna/i.test(i)},
+  {label:'Espaço delivery', match:i=>/delivery/i.test(i)},
+  {label:'Mercadinho', match:i=>/mini\s*mercado|minimercado|mini\s*market/i.test(i)},
+];
+
+function processEmps(emps,tipsRaw,imgsRaw,lazerRaw){
+  const tipsBy={}, imgsBy={}, lazerBy={};
   tipsRaw.forEach(t=>{ (tipsBy[t.empreendimento_id]=tipsBy[t.empreendimento_id]||[]).push(t); });
   imgsRaw.forEach(i=>{ (imgsBy[i.empreendimento_id]=imgsBy[i.empreendimento_id]||[]).push(i); });
+  lazerRaw.forEach(l=>{ (lazerBy[l.empreendimento_id]=lazerBy[l.empreendimento_id]||[]).push(l.item||''); });
+
   return emps.map(e=>{
     const imgs=imgsBy[e.id]||[];
     const fachada=pickImg(imgs,'fachada')||pickImg(imgs,'perspectiva_3d')||null;
@@ -125,11 +155,20 @@ function processEmps(emps,tipsRaw,imgsRaw){
     const difsRaw=(e.diferenciais_apto||'').split(',').map(s=>s.trim()).filter(Boolean);
     const difs=difsRaw.length?difsRaw.slice(0,4):['Consultar diferenciais com o corretor'];
     const endereco=[e.logradouro,e.numero&&e.numero!=='S/N'?e.numero:null].filter(Boolean).join(', ')||(e.bairro_comercial||e.bairro||'Zona Leste');
+
+    const rawItems=lazerBy[e.id]||[];
+    const amenities=AMENITY_GROUPS.filter(g=>rawItems.some(i=>g.match(i))).map(g=>g.label);
+    if(e.rooftop) amenities.push('Rooftop');
+
     return {
       id:e.id, nome:e.nome, bairro:e.bairro_comercial||e.bairro||'Zona Leste',
       incorporadora:e.incorporadora||'—', entrega:e.mes_entrega||'A definir',
       status:STATUS_LABELS[e.status]||e.status||'—',
       endereco, fachada, difs, tips:tips.sort((a,b)=>a.area-b.area),
+      vagasMax:e.num_vagas_max??0, suitesMax:e.num_suites_max??0, areaMin:+e.area_min_m2||0,
+      mcmv:!!e.enquadrado_mcmv, varanda:!!e.tem_varanda,
+      pertoMetro: e.dist_metro_metros!=null && e.dist_metro_metros<=800,
+      amenities,
     };
   });
 }
@@ -139,6 +178,7 @@ function filtered(){
   return EMPS.filter(e=>{
     if(lf.status && e.status!==lf.status) return false;
     if(lf.bairro && e.bairro!==lf.bairro) return false;
+    if(lf.incorporadora && e.incorporadora!==lf.incorporadora) return false;
     if(lf.quartos && !e.tips.some(t=> lf.quartos==='3' ? t.quartos>=3 : t.quartos===+lf.quartos)) return false;
     if(lf.faixa){
       const min=Math.min(...e.tips.map(t=>t.preco));
@@ -147,6 +187,18 @@ function filtered(){
       if(lf.faixa==='c' && (min<800000||min>=1200000)) return false;
       if(lf.faixa==='d' && min<1200000) return false;
     }
+    if(lf.vagas && e.vagasMax < (lf.vagas==='3'?3:+lf.vagas)) return false;
+    if(lf.suites && e.suitesMax < (lf.suites==='2'?2:+lf.suites)) return false;
+    if(lf.area){
+      if(lf.area==='a' && e.areaMin>=35) return false;
+      if(lf.area==='b' && (e.areaMin<35||e.areaMin>=55)) return false;
+      if(lf.area==='c' && (e.areaMin<55||e.areaMin>=80)) return false;
+      if(lf.area==='d' && e.areaMin<80) return false;
+    }
+    if(lf.mcmv && !e.mcmv) return false;
+    if(lf.varanda && !e.varanda) return false;
+    if(lf.pertoMetro && !e.pertoMetro) return false;
+    if(lf.amenities.length && !lf.amenities.every(a=>e.amenities.includes(a))) return false;
     return true;
   });
 }
@@ -160,7 +212,9 @@ const ACTIONS={
   toggleTheme(){ state.theme=state.theme==='light'?'dark':'light'; q('root').dataset.theme=state.theme; q('themeBtn').textContent=state.theme==='light'?'☾':'☀'; },
   toggleFilter(t){ const key=t.dataset.filterKey; state.openFilter = state.openFilter===key?null:key; renderFilterBar(); },
   pickFilter(t){ const key=t.dataset.filterKey, val=t.dataset.filterVal; state.listaF={...state.listaF,[key]:val}; state.openFilter=null; renderAll(); },
-  clearFilters(){ state.listaF={status:'',bairro:'',quartos:'',faixa:''}; state.openFilter=null; renderAll(); },
+  toggleBoolFilter(t){ const key=t.dataset.filterKey; state.listaF={...state.listaF,[key]:!state.listaF[key]}; renderAll(); },
+  toggleAmenity(t){ const val=t.dataset.filterVal; const cur=state.listaF.amenities; state.listaF={...state.listaF, amenities: cur.includes(val)?cur.filter(a=>a!==val):[...cur,val]}; renderAll(); },
+  clearFilters(){ state.listaF={status:'',bairro:'',quartos:'',faixa:'',incorporadora:'',vagas:'',suites:'',area:'',mcmv:false,varanda:false,pertoMetro:false,amenities:[]}; state.openFilter=null; renderAll(); },
   setGrade(){ state.view='grade'; renderAll(); },
   setLista(){ state.view='lista'; renderAll(); },
   openPanel(){ state.panelOpen=true; state.openFilter=null; renderAll(); },
@@ -186,14 +240,21 @@ document.addEventListener('change', e=>{
 
 /* ---------------- RENDER ---------------- */
 function bairroList(){ return [...new Set(EMPS.map(e=>e.bairro))].sort(); }
+function incorporadoraList(){ return [...new Set(EMPS.map(e=>e.incorporadora))].filter(x=>x&&x!=='—').sort(); }
+function activeFilterCount(){
+  const lf=state.listaF;
+  return ['status','bairro','incorporadora','quartos','faixa','vagas','suites','area'].filter(k=>lf[k]).length
+    + (lf.mcmv?1:0) + (lf.varanda?1:0) + (lf.pertoMetro?1:0) + lf.amenities.length;
+}
 
 function renderFilterBar(){
-  const lf=state.listaF, bairros=bairroList();
+  const lf=state.listaF, bairros=bairroList(), incorporadoras=incorporadoraList();
   const groupsDef=[
     {key:'status', name:'Status', values:STATUS_ORDER},
     {key:'bairro', name:'Bairro', values:bairros},
+    {key:'incorporadora', name:'Incorporadora', values:incorporadoras},
   ];
-  const filterCount=['status','bairro','quartos','faixa'].filter(k=>lf[k]).length;
+  const filterCount=activeFilterCount();
   const btns=groupsDef.map(g=>{
     const active=!!lf[g.key];
     const open=state.openFilter===g.key;
@@ -234,19 +295,29 @@ function renderFilterBar(){
 function pillHtml(key, label, value, active){
   return `<button data-act="pickFilter" data-filter-key="${key}" data-filter-val="${esc(value)}" style="font-family:inherit;font-size:14px;font-weight:500;padding:9px 16px;border-radius:999px;cursor:pointer;border:1px solid ${active?'var(--red)':'var(--card-brd)'};background:${active?'var(--red)':'var(--card)'};color:${active?'#fff':'var(--text)'}">${esc(label)}</button>`;
 }
+function boolPillHtml(key, label, active){
+  return `<button data-act="toggleBoolFilter" data-filter-key="${key}" style="font-family:inherit;font-size:14px;font-weight:500;padding:9px 16px;border-radius:999px;cursor:pointer;border:1px solid ${active?'var(--red)':'var(--card-brd)'};background:${active?'var(--red)':'var(--card)'};color:${active?'#fff':'var(--text)'}">${active?'✓ ':''}${esc(label)}</button>`;
+}
+function amenityPillHtml(label, active){
+  return `<button data-act="toggleAmenity" data-filter-val="${esc(label)}" style="font-family:inherit;font-size:13.5px;font-weight:500;padding:8px 14px;border-radius:999px;cursor:pointer;border:1px solid ${active?'var(--gold)':'var(--card-brd)'};background:${active?'var(--gold)':'var(--card)'};color:${active?'#111':'var(--text)'}">${active?'✓ ':''}${esc(label)}</button>`;
+}
 function renderPanel(){
   if(!state.panelOpen){ q('panelRoot').innerHTML=''; return; }
-  const lf=state.listaF, bairros=bairroList();
+  const lf=state.listaF, bairros=bairroList(), incorporadoras=incorporadoraList();
   const groups=[
     {name:'Quartos', key:'quartos', opts:[{label:'Qualquer',v:''},{label:'1 quarto',v:'1'},{label:'2 quartos',v:'2'},{label:'3+ quartos',v:'3'}]},
     {name:'Faixa de preço', key:'faixa', opts:[{label:'Qualquer',v:''},{label:'até R$ 500 mil',v:'a'},{label:'R$ 500–800 mil',v:'b'},{label:'R$ 800 mil–1,2 mi',v:'c'},{label:'acima de R$ 1,2 mi',v:'d'}]},
+    {name:'Metragem', key:'area', opts:[{label:'Qualquer',v:''},{label:'até 35 m²',v:'a'},{label:'35–55 m²',v:'b'},{label:'55–80 m²',v:'c'},{label:'acima de 80 m²',v:'d'}]},
+    {name:'Vagas de garagem', key:'vagas', opts:[{label:'Qualquer',v:''},{label:'1+ vaga',v:'1'},{label:'2+ vagas',v:'2'},{label:'3+ vagas',v:'3'}]},
+    {name:'Suítes', key:'suites', opts:[{label:'Qualquer',v:''},{label:'1+ suíte',v:'1'},{label:'2+ suítes',v:'2'}]},
     {name:'Status da obra', key:'status', opts:[{label:'Todos',v:''},...STATUS_ORDER.map(v=>({label:v,v}))]},
     {name:'Bairro', key:'bairro', opts:[{label:'Todos',v:''},...bairros.map(v=>({label:v,v}))]},
+    {name:'Incorporadora', key:'incorporadora', opts:[{label:'Todas',v:''},...incorporadoras.map(v=>({label:v,v}))]},
   ];
   const count=filtered().length;
   q('panelRoot').innerHTML = `
     <div data-act="closePanel" style="position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.45);backdrop-filter:blur(2px);display:flex;justify-content:flex-end">
-      <div data-act="noop" style="width:min(420px,100%);height:100%;background:var(--bg);box-shadow:-18px 0 50px rgba(0,0,0,.3);display:flex;flex-direction:column">
+      <div data-act="noop" style="width:min(440px,100%);height:100%;background:var(--bg);box-shadow:-18px 0 50px rgba(0,0,0,.3);display:flex;flex-direction:column">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 24px;border-bottom:1px solid var(--card-brd)">
           <span style="font-size:19px;font-weight:600">Filtros</span>
           <button data-act="closePanel" style="width:36px;height:36px;border-radius:999px;border:1px solid var(--card-brd);background:var(--card);color:var(--text);cursor:pointer;font-size:16px">✕</button>
@@ -259,6 +330,24 @@ function renderPanel(){
                 ${g.opts.map(o=>pillHtml(g.key,o.label,o.v,lf[g.key]===o.v)).join('')}
               </div>
             </div>`).join('')}
+
+          <div>
+            <div style="font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Características</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${boolPillHtml('mcmv','Enquadrado no MCMV',lf.mcmv)}
+              ${boolPillHtml('varanda','Com varanda',lf.varanda)}
+              ${boolPillHtml('pertoMetro','Perto do metrô (até 800m)',lf.pertoMetro)}
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Lazer e utilidades do condomínio</div>
+            <p style="color:var(--muted);font-size:12.5px;margin-bottom:12px">Selecione um ou mais itens — mostramos só quem tem todos.</p>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              ${AMENITY_GROUPS.map(g=>amenityPillHtml(g.label, lf.amenities.includes(g.label))).join('')}
+              ${amenityPillHtml('Rooftop', lf.amenities.includes('Rooftop'))}
+            </div>
+          </div>
         </div>
         <div style="display:flex;gap:10px;padding:18px 24px;border-top:1px solid var(--card-brd)">
           <button data-act="clearFilters" style="flex:1;height:48px;border-radius:12px;border:1px solid var(--card-brd);background:transparent;color:var(--text);font-family:inherit;font-weight:600;font-size:14.5px;cursor:pointer">Limpar</button>
