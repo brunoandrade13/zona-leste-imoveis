@@ -57,7 +57,7 @@
           <span style="font-weight:600;font-size:15.5px;letter-spacing:-.01em;white-space:nowrap">Zona Leste</span>
         </button>
         <nav style="display:flex;align-items:center;gap:2px">
-          <a href="#carrossel" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Empreendimentos</a>
+          <a href="empreendimentos.html" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Empreendimentos</a>
           <a href="#bairros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Bairros</a>
           <a href="#numeros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Faça sua simulação</a>
         </nav>
@@ -113,7 +113,7 @@
               <option value="d" style="color:#111">acima de R$ 1,2 mi</option>
             </select>
           </label>
-          <a href="#carrossel" style="display:flex;align-items:center;gap:8px;padding:0 26px;background:var(--red);color:#fff;border-radius:13px;font-weight:600;font-size:15px;min-height:56px">
+          <a id="buscarBtn" href="empreendimentos.html" data-act="goToListing" style="display:flex;align-items:center;gap:8px;padding:0 26px;background:var(--red);color:#fff;border-radius:13px;font-weight:600;font-size:15px;min-height:56px">
             Buscar <span style="opacity:.8">(<span id="resultCountA">—</span>)</span>
           </a>
         </div>
@@ -217,7 +217,7 @@
         <div data-reveal>
           <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px">Navegação</div>
           <div style="display:flex;flex-direction:column;gap:11px">
-            <a href="#carrossel" class="footlink" style="color:var(--muted);font-size:14.5px">Empreendimentos</a>
+            <a href="empreendimentos.html" class="footlink" style="color:var(--muted);font-size:14.5px">Empreendimentos</a>
             <a href="#bairros" class="footlink" style="color:var(--muted);font-size:14.5px">Bairros</a>
             <a href="#" class="footlink" style="color:var(--muted);font-size:14.5px">Sobre</a>
             <a href="#" class="footlink" style="color:var(--muted);font-size:14.5px">Contato</a>
@@ -397,6 +397,25 @@ function filtered(){
   });
 }
 
+// Same filter, but over the whole catalog — used for the "Buscar (N)" button,
+// since that button leads to the full empreendimentos.html listing rather
+// than the small on-page carousel.
+function filteredFullCount(){
+  const {bairro,quartos,faixa}=state.search;
+  return EMPS.filter(e=>{
+    if(bairro && e.bairro!==bairro) return false;
+    if(quartos && !e.tips.some(t=> quartos==='3' ? t.quartos>=3 : t.quartos===+quartos)) return false;
+    if(faixa){
+      const min=Math.min(...e.tips.map(t=>t.preco));
+      if(faixa==='a' && min>=500000) return false;
+      if(faixa==='b' && (min<500000||min>=800000)) return false;
+      if(faixa==='c' && (min<800000||min>=1200000)) return false;
+      if(faixa==='d' && min<1200000) return false;
+    }
+    return true;
+  }).length;
+}
+
 /* ---------------- CAROUSEL 1 (empreendimentos) ---------------- */
 let pos=0, vel=0, speedC=0.0038, pausedC=false, downC=false, movedC=false, startXC=0, lastXC=0;
 let trackEl=null, stageEl=null;
@@ -410,7 +429,7 @@ function tipsPillsHtml(e, selIdx, eventCardIdx){
 
 function renderCarousel(){
   const list=filtered();
-  q('resultCountA').textContent=list.length;
+  q('resultCountA').textContent=filteredFullCount();
   q('resultCountB').textContent=list.length;
 
   const cardsHtml = list.map((e,i)=>{
@@ -565,6 +584,15 @@ function bindCarouselDrag(){
 
 /* ---------------- ACTIONS ---------------- */
 const ACTIONS={
+  goToListing(t,e){
+    e.preventDefault();
+    const p=new URLSearchParams();
+    if(state.search.bairro) p.set('bairro', state.search.bairro);
+    if(state.search.quartos) p.set('quartos', state.search.quartos);
+    if(state.search.faixa) p.set('faixa', state.search.faixa);
+    const qs=p.toString();
+    window.location.href = 'empreendimentos.html' + (qs?('?'+qs):'');
+  },
   goHome(){ state.screen='home'; state.zoom=null; q('homeScreen').style.display='block'; q('empScreen').style.display='none'; window.scrollTo({top:0}); },
   toggleTheme(){ state.theme = state.theme==='light'?'dark':'light'; q('root').dataset.theme=state.theme; q('themeBtn').textContent = state.theme==='light'?'☾':'☀'; },
   cardClick(t){
@@ -933,6 +961,12 @@ function tick(){
   renderCompare();
   renderTestimonials();
   renderFooterBairros();
+
+  const empId = new URLSearchParams(window.location.search).get('emp');
+  if(empId && EMPS.some(e=>e.id===empId)){
+    state.screen='emp'; state.currentId=empId; renderEmpScreen();
+    q('homeScreen').style.display='none'; q('empScreen').style.display='block';
+  }
 
   q('loadOverlay').style.display='none';
   q('root').style.display='block';
