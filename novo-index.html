@@ -592,6 +592,17 @@ const ACTIONS={
 
 document.addEventListener('click', e=>{
   const t=e.target.closest('[data-act]');
+  if(state.zoom!=null){
+    const zoomedCard = trackEl ? trackEl.children[state.zoom] : null;
+    const insideZoomedCard = zoomedCard && zoomedCard.contains(e.target);
+    const isDifferentCardClick = t && t.dataset.act==='cardClick' && +t.dataset.idx!==state.zoom;
+    if(!insideZoomedCard && !isDifferentCardClick){
+      const prevZoom=state.zoom;
+      state.zoom=null;
+      pulseCardTransition();
+      setZoomCta(prevZoom, filtered());
+    }
+  }
   if(!t) return;
   ACTIONS[t.dataset.act]?.(t,e);
 });
