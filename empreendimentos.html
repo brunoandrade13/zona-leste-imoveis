@@ -90,7 +90,7 @@ const fmt=n=>'R$ '+Math.round(n).toLocaleString('pt-BR');
 const PLACEHOLDER_IMG='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="%23EDEBE6"/></svg>');
 
 let EMPS=[];
-const state={ theme:'light', view:'grade', openFilter:null, panelOpen:false, zoomId:null,
+const state={ theme:'light', view:'grade', openFilter:null, panelOpen:false, panelExpanded:null, zoomId:null,
   listaF:{ status:'', bairro:'', quartos:'', faixa:'', incorporadora:'', vagas:'', suites:'', area:'', mcmv:false, varanda:false, pertoMetro:false, amenities:[] } };
 
 async function sbFetch(path,params={}){
@@ -211,13 +211,14 @@ function statusBadge(status){
 const ACTIONS={
   toggleTheme(){ state.theme=state.theme==='light'?'dark':'light'; q('root').dataset.theme=state.theme; q('themeBtn').textContent=state.theme==='light'?'☾':'☀'; },
   toggleFilter(t){ const key=t.dataset.filterKey; state.openFilter = state.openFilter===key?null:key; renderFilterBar(); },
-  pickFilter(t){ const key=t.dataset.filterKey, val=t.dataset.filterVal; state.listaF={...state.listaF,[key]:val}; state.openFilter=null; renderAll(); },
+  togglePanelGroup(t){ const key=t.dataset.filterKey; state.panelExpanded = state.panelExpanded===key?null:key; renderPanel(); },
+  pickFilter(t){ const key=t.dataset.filterKey, val=t.dataset.filterVal; state.listaF={...state.listaF,[key]:val}; state.openFilter=null; state.panelExpanded=null; renderAll(); },
   toggleBoolFilter(t){ const key=t.dataset.filterKey; state.listaF={...state.listaF,[key]:!state.listaF[key]}; renderAll(); },
   toggleAmenity(t){ const val=t.dataset.filterVal; const cur=state.listaF.amenities; state.listaF={...state.listaF, amenities: cur.includes(val)?cur.filter(a=>a!==val):[...cur,val]}; renderAll(); },
-  clearFilters(){ state.listaF={status:'',bairro:'',quartos:'',faixa:'',incorporadora:'',vagas:'',suites:'',area:'',mcmv:false,varanda:false,pertoMetro:false,amenities:[]}; state.openFilter=null; renderAll(); },
+  clearFilters(){ state.listaF={status:'',bairro:'',quartos:'',faixa:'',incorporadora:'',vagas:'',suites:'',area:'',mcmv:false,varanda:false,pertoMetro:false,amenities:[]}; state.openFilter=null; state.panelExpanded=null; renderAll(); },
   setGrade(){ state.view='grade'; renderAll(); },
   setLista(){ state.view='lista'; renderAll(); },
-  openPanel(){ state.panelOpen=true; state.openFilter=null; renderAll(); },
+  openPanel(){ state.panelOpen=true; state.openFilter=null; state.panelExpanded=null; renderAll(); },
   closePanel(){ state.panelOpen=false; renderAll(); },
   zoomOpen(t){ state.zoomId=t.dataset.id; renderZoom(); },
   zoomClose(){ state.zoomId=null; renderZoom(); },
@@ -311,8 +312,10 @@ function renderPanel(){
     {name:'Vagas de garagem', key:'vagas', opts:[{label:'Qualquer',v:''},{label:'1+ vaga',v:'1'},{label:'2+ vagas',v:'2'},{label:'3+ vagas',v:'3'}]},
     {name:'Suítes', key:'suites', opts:[{label:'Qualquer',v:''},{label:'1+ suíte',v:'1'},{label:'2+ suítes',v:'2'}]},
     {name:'Status da obra', key:'status', opts:[{label:'Todos',v:''},...STATUS_ORDER.map(v=>({label:v,v}))]},
-    {name:'Bairro', key:'bairro', opts:[{label:'Todos',v:''},...bairros.map(v=>({label:v,v}))]},
-    {name:'Incorporadora', key:'incorporadora', opts:[{label:'Todas',v:''},...incorporadoras.map(v=>({label:v,v}))]},
+  ];
+  const bigGroups=[
+    {name:'Bairro', key:'bairro', allLabel:'Todos os bairros', opts:[{label:'Todos',v:''},...bairros.map(v=>({label:v,v}))]},
+    {name:'Incorporadora', key:'incorporadora', allLabel:'Todas as incorporadoras', opts:[{label:'Todas',v:''},...incorporadoras.map(v=>({label:v,v}))]},
   ];
   const count=filtered().length;
   q('panelRoot').innerHTML = `
@@ -330,6 +333,24 @@ function renderPanel(){
                 ${g.opts.map(o=>pillHtml(g.key,o.label,o.v,lf[g.key]===o.v)).join('')}
               </div>
             </div>`).join('')}
+
+          ${bigGroups.map(g=>{
+            const expanded=state.panelExpanded===g.key;
+            const current=lf[g.key]||g.allLabel;
+            return `
+            <div>
+              <div style="font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">${esc(g.name)}</div>
+              <button data-act="togglePanelGroup" data-filter-key="${g.key}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;font-family:inherit;font-size:14.5px;font-weight:500;padding:12px 14px;border-radius:11px;cursor:pointer;border:1px solid ${lf[g.key]?'var(--red)':'var(--card-brd)'};background:var(--card);color:var(--text)">
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(current)}</span>
+                <span style="flex-shrink:0;transition:transform .2s;transform:${expanded?'rotate(180deg)':'rotate(0deg)'};color:var(--muted)">▾</span>
+              </button>
+              ${expanded?`<div style="margin-top:8px;max-height:260px;overflow-y:auto;border:1px solid var(--card-brd);border-radius:11px;padding:6px;display:flex;flex-direction:column">
+                ${g.opts.map(o=>`<button data-act="pickFilter" data-filter-key="${g.key}" data-filter-val="${esc(o.v)}" class="filter-opt" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-family:inherit;font-size:14px;font-weight:500;padding:9px 10px;border-radius:8px;border:none;cursor:pointer;background:${lf[g.key]===o.v?'var(--surface)':'transparent'};color:var(--text)">
+                  <span>${esc(o.label)}</span>${lf[g.key]===o.v?'<span style="color:var(--red)">✓</span>':''}
+                </button>`).join('')}
+              </div>`:''}
+            </div>`;
+          }).join('')}
 
           <div>
             <div style="font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Características</div>
