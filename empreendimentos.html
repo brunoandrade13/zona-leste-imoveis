@@ -28,13 +28,17 @@
   a:hover{color:var(--gold)}
   .serif{font-family:'Newsreader',Georgia,serif;font-style:italic;font-weight:500}
   .reveal-init{opacity:0;transform:translateY(34px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
-  .reveal-in{opacity:1 !important;transform:none !important}
+  .reveal-in{opacity:1 !important;transform:none}
   @keyframes zoomIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
-  .card-hover:hover{transform:translateY(-6px);box-shadow:0 30px 60px -14px rgba(17,17,17,.5),0 10px 20px -8px rgba(17,17,17,.3)}
-  .card-hover-lista:hover{transform:translateY(-3px);box-shadow:0 24px 50px -16px rgba(17,17,17,.45)}
+  .card-hover:hover{transform:translateY(-8px) scale(1.015);box-shadow:0 30px 60px -14px rgba(17,17,17,.5),0 10px 20px -8px rgba(17,17,17,.3)}
+  .card-hover-lista:hover{transform:translateY(-4px) scale(1.008);box-shadow:0 24px 50px -16px rgba(17,17,17,.45)}
   .btn-white:hover{background:var(--red) !important;color:#fff !important}
   .btn-outline-red:hover{background:var(--red) !important;color:#fff !important}
   .filter-opt:hover{background:var(--surface)}
+  .hoverop:hover{opacity:1 !important;background:var(--surface)}
+  .hovertheme:hover{filter:brightness(1.08)}
+  .hoverlogin:hover{background:var(--gold) !important;color:#111 !important}
+  .hoverlogin:hover .arrow{transform:translateX(3px)}
   #loadOverlay{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
   select{-webkit-appearance:none;appearance:none}
 </style>
@@ -44,19 +48,28 @@
 <div id="loadOverlay">Carregando catálogo…</div>
 
 <div id="root" data-theme="light" style="min-height:100vh;background:var(--bg);color:var(--text);display:none">
-  <header style="position:sticky;top:0;z-index:50;background:transparent;padding-top:20px">
-    <div style="display:flex;align-items:center;justify-content:center;padding:0 20px">
+  <header style="position:fixed;top:0;left:0;right:0;z-index:50;background:transparent">
+    <div style="height:88px;display:flex;align-items:center;justify-content:center;padding:0 20px">
       <div style="display:flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:8px 8px 8px 16px;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.12)">
-        <a href="novo-index.html" style="display:flex;align-items:center;gap:9px;padding-right:6px">
+        <a href="novo-index.html" style="display:flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;color:inherit;font-family:inherit;padding-right:6px;text-decoration:none">
           <span style="width:30px;height:30px;border-radius:8px;background:var(--red);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px">ZL</span>
           <span style="font-weight:600;font-size:15.5px;letter-spacing:-.01em;white-space:nowrap;color:var(--text)">Zona Leste</span>
         </a>
-        <button id="themeBtn" data-act="toggleTheme" title="Alternar tema" style="width:38px;height:38px;border-radius:999px;border:none;background:var(--surface);cursor:pointer;color:var(--text);display:grid;place-items:center;font-size:15px">☾</button>
+        <nav style="display:flex;align-items:center;gap:2px">
+          <a href="empreendimentos.html" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Empreendimentos</a>
+          <a href="novo-index.html#bairros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Bairros</a>
+          <a href="novo-index.html#numeros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Faça sua simulação</a>
+        </nav>
+        <button id="themeBtn" data-act="toggleTheme" title="Alternar tema" class="hovertheme" style="width:38px;height:38px;border-radius:999px;border:none;background:var(--surface);cursor:pointer;color:var(--text);display:grid;place-items:center;font-size:15px;flex-shrink:0">☾</button>
+        <button class="hoverlogin" style="position:relative;overflow:hidden;height:38px;padding:0 18px;border-radius:999px;border:none;background:var(--red);cursor:pointer;color:#fff;font-family:inherit;font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;white-space:nowrap">
+          <span>Entrar</span>
+          <span class="arrow" style="transition:transform .25s">→</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <main style="max-width:1320px;margin:0 auto;padding:40px 24px 90px">
+  <main style="max-width:1320px;margin:0 auto;padding:128px 24px 90px">
     <div style="margin-bottom:8px">
       <h1 style="font-size:clamp(30px,4.4vw,48px);font-weight:600;letter-spacing:-.02em">Todos os <span class="serif" style="color:var(--red)">empreendimentos</span></h1>
       <p style="color:var(--muted);font-size:15.5px;margin-top:8px">Explore e filtre o catálogo completo da Zona Leste · <span id="listaCount" style="color:var(--text);font-weight:600">—</span> resultados.</p>
@@ -221,7 +234,11 @@ const ACTIONS={
   openPanel(){ state.panelOpen=true; state.openFilter=null; state.panelExpanded=null; renderAll(); },
   closePanel(){ state.panelOpen=false; renderAll(); },
   zoomOpen(t){ state.zoomId=t.dataset.id; renderZoom(); },
-  zoomClose(){ state.zoomId=null; renderZoom(); },
+  zoomClose(){
+    const id=state.zoomId, modal=q('zoomCard'), backdrop=q('zoomBackdrop');
+    const sourceEl = id!=null ? document.querySelector(`[data-reveal][data-id="${id}"]`) : null;
+    animateZoomClose(sourceEl, modal, backdrop, ()=>{ state.zoomId=null; renderZoom(); });
+  },
   openDetail(t){ window.location.href='novo-index.html?emp='+encodeURIComponent(t.dataset.id); },
   noop(){},
 };
@@ -462,8 +479,8 @@ function renderZoom(){
   ];
   const img=e.fachada||PLACEHOLDER_IMG;
   q('zoomRoot').innerHTML = `
-    <div data-act="zoomClose" style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:32px">
-      <div data-act="openDetail" data-id="${e.id}" title="Clique para abrir a página completa" style="position:relative;width:min(440px,100%);height:min(620px,86vh);overflow:hidden;border-radius:24px;background:var(--ph1);box-shadow:0 40px 90px rgba(0,0,0,.55);cursor:pointer;animation:zoomIn .3s cubic-bezier(.2,.8,.2,1)">
+    <div id="zoomBackdrop" data-act="zoomClose" style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:32px;opacity:0">
+      <div id="zoomCard" data-act="openDetail" data-id="${e.id}" title="Clique para abrir a página completa" style="position:relative;width:min(440px,100%);height:min(620px,86vh);overflow:hidden;border-radius:24px;background:var(--ph1);box-shadow:0 40px 90px rgba(0,0,0,.55);cursor:pointer">
         <img src="${esc(img)}" alt="${esc(e.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,0) 26%,rgba(0,0,0,.4) 54%,rgba(0,0,0,.9) 100%)"></div>
         <span style="${statusBadge(e.status)}">${esc(e.status)}</span>
@@ -480,6 +497,52 @@ function renderZoom(){
         </div>
       </div>
     </div>`;
+
+  const modal=q('zoomCard'), backdrop=q('zoomBackdrop');
+  const sourceEl=document.querySelector(`[data-reveal][data-id="${e.id}"]`);
+  if(modal && sourceEl){
+    requestAnimationFrame(()=>animateZoomOpen(sourceEl, modal, backdrop));
+  } else if(backdrop){
+    backdrop.style.transition='opacity .25s ease';
+    backdrop.style.opacity='1';
+  }
+}
+
+// FLIP-style animation: the modal starts exactly at the clicked card's
+// on-screen position and size, then grows into its final centered size —
+// instead of just flashing into view at full size.
+function animateZoomOpen(sourceEl, modalEl, backdropEl){
+  const sourceRect=sourceEl.getBoundingClientRect();
+  const finalRect=modalEl.getBoundingClientRect();
+  const dx=(sourceRect.left+sourceRect.width/2)-(finalRect.left+finalRect.width/2);
+  const dy=(sourceRect.top+sourceRect.height/2)-(finalRect.top+finalRect.height/2);
+  const sx=sourceRect.width/finalRect.width, sy=sourceRect.height/finalRect.height;
+  modalEl.style.transition='none';
+  modalEl.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+  modalEl.style.opacity='.5';
+  if(backdropEl) backdropEl.style.transition='none';
+  // force reflow so the browser registers the starting position before we animate away from it
+  modalEl.offsetWidth;
+  modalEl.style.transition='transform .4s cubic-bezier(.2,.85,.25,1), opacity .3s ease';
+  modalEl.style.transform='translate(0,0) scale(1,1)';
+  modalEl.style.opacity='1';
+  if(backdropEl){
+    backdropEl.style.transition='opacity .32s ease';
+    backdropEl.style.opacity='1';
+  }
+}
+function animateZoomClose(sourceEl, modalEl, backdropEl, onDone){
+  if(!sourceEl || !modalEl){ onDone(); return; }
+  const sourceRect=sourceEl.getBoundingClientRect();
+  const finalRect=modalEl.getBoundingClientRect();
+  const dx=(sourceRect.left+sourceRect.width/2)-(finalRect.left+finalRect.width/2);
+  const dy=(sourceRect.top+sourceRect.height/2)-(finalRect.top+finalRect.height/2);
+  const sx=sourceRect.width/finalRect.width, sy=sourceRect.height/finalRect.height;
+  modalEl.style.transition='transform .34s cubic-bezier(.4,0,.2,1), opacity .3s ease';
+  modalEl.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+  modalEl.style.opacity='.4';
+  if(backdropEl){ backdropEl.style.transition='opacity .3s ease'; backdropEl.style.opacity='0'; }
+  setTimeout(onDone, 320);
 }
 
 function renderAll(){
