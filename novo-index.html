@@ -78,9 +78,7 @@
       <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.2) 40%,rgba(0,0,0,.62));z-index:1"></div>
 
       <div style="position:relative;z-index:3;text-align:center;padding:0 24px;max-width:900px;margin-top:40px">
-        <div style="display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(10px);color:#fff;font-size:13px;font-weight:500;margin-bottom:26px">
-          <span style="color:var(--gold)">●</span> <span id="heroCount">—</span> empreendimentos ativos na Zona Leste
-        </div>
+        <span id="heroCount" style="display:none">—</span>
         <h1 style="color:#fff;font-size:clamp(40px,6vw,74px);line-height:1.02;font-weight:600;letter-spacing:-.02em;text-wrap:balance">
           Todo lançamento da Zona Leste,<br><span class="serif" style="color:var(--gold)">num só</span> lugar.
         </h1>
@@ -149,6 +147,9 @@
         <p style="color:var(--muted);max-width:340px;font-size:15px">Contexto de mobilidade e vizinhança para orientar a busca antes de abrir os empreendimentos.</p>
       </div>
       <div id="bairrosCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px"></div>
+      <div style="text-align:center;margin-top:30px">
+        <a href="bairros.html" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 26px;border-radius:999px;border:1px solid var(--card-brd);background:var(--card);color:var(--text);font-weight:600;font-size:14.5px">Veja todos os bairros →</a>
+      </div>
     </section>
 
     <!-- ZONA LESTE EM NÚMEROS -->
@@ -394,7 +395,7 @@ function filtered(){
 }
 
 /* ---------------- CAROUSEL 1 (empreendimentos) ---------------- */
-let pos=0, vel=0, speedC=0.0012, pausedC=false, downC=false, movedC=false, startXC=0, lastXC=0;
+let pos=0, vel=0, speedC=0.0020, pausedC=false, downC=false, movedC=false, startXC=0, lastXC=0;
 let trackEl=null, stageEl=null;
 
 function tipsPillsHtml(e, selIdx, eventCardIdx){
@@ -412,9 +413,10 @@ function renderCarousel(){
   const cardsHtml = list.map((e,i)=>{
     const selIdx=state.sel[e.id]??0, t=e.tips[selIdx]||e.tips[0];
     const img = e.fachada || PLACEHOLDER_IMG;
+    const isZoomed = state.zoom===i;
     return `
     <div data-act="cardClick" data-idx="${i}" data-dblact="openEmp" data-id="${e.id}" style="position:absolute;left:50%;top:50%;width:300px;will-change:transform,opacity;transform:translate(-50%,-50%)">
-      <div style="position:relative;height:440px;border-radius:22px;overflow:hidden;background:var(--ph1);box-shadow:var(--shadow)">
+      <div style="position:relative;height:440px;border-radius:22px;overflow:hidden;background:var(--ph1);box-shadow:${isZoomed?'0 40px 100px rgba(0,0,0,.55)':'var(--shadow)'}">
         <img data-src="${esc(img)}" alt="${esc(e.nome)}" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;background:linear-gradient(135deg,var(--ph1),var(--ph2))">
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 22%,transparent 40%,rgba(0,0,0,.92) 100%)"></div>
         <div style="position:absolute;left:12px;top:12px;display:flex;gap:6px;flex-wrap:wrap">
@@ -432,46 +434,17 @@ function renderCarousel(){
               <div style="opacity:.8;font-size:12px">A partir de · ${t.area} m²</div>
               <div style="display:flex;align-items:center;gap:8px"><span style="font-size:23px;font-weight:600;letter-spacing:-.01em">${fmt(t.preco)}</span></div>
             </div>
+            ${isZoomed?`<button data-act="openEmp" data-id="${e.id}" style="height:40px;padding:0 16px;border-radius:999px;border:none;background:var(--red);color:#fff;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap">Ver empreendimento →</button>`:''}
           </div>
         </div>
       </div>
     </div>`;
   }).join('');
 
-  let zoomHtml='';
-  if(state.zoom!=null && list[state.zoom]){
-    const e=list[state.zoom], selIdx=state.sel[e.id]??0, t=e.tips[selIdx]||e.tips[0];
-    const img=e.fachada||PLACEHOLDER_IMG;
-    zoomHtml=`
-    <div data-act="zoomClose" style="position:fixed;inset:0;z-index:9000;display:grid;place-items:center;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);padding:24px">
-      <div data-act="noop" data-dblact="openEmp" data-id="${e.id}" style="position:relative;width:420px;max-width:90vw;height:560px;max-height:82vh;border-radius:28px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.6);cursor:pointer;background:var(--ph1)">
-        <img src="${esc(img)}" alt="${esc(e.nome)}" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 24%,transparent 42%,rgba(0,0,0,.92) 100%)"></div>
-        <div style="position:absolute;left:20px;top:18px;display:flex;gap:8px;flex-wrap:wrap">
-          <span style="padding:7px 13px;border-radius:999px;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);color:#fff;font-size:12.5px;font-weight:600">Entrega ${esc(e.entrega)}</span>
-        </div>
-        <button data-act="zoomClose" style="position:absolute;right:16px;top:16px;width:36px;height:36px;border-radius:999px;border:none;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);color:#fff;cursor:pointer;font-size:15px">✕</button>
-        <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 24px 24px;color:#fff">
-          <div style="font-size:13px;opacity:.82;font-weight:500;margin-bottom:3px">${esc(e.incorporadora)} · ${esc(e.bairro)} · ${esc(e.status)}</div>
-          <h3 style="font-size:27px;font-weight:600;letter-spacing:-.01em;margin-bottom:15px">${esc(e.nome)}</h3>
-          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px">${tipsPillsHtml(e,selIdx,state.zoom)}</div>
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
-            <div>
-              <div style="font-size:12.5px;opacity:.78">A partir de · ${t.area} m²</div>
-              <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">${fmt(t.preco)}</div>
-            </div>
-            <button data-act="openEmp" data-id="${e.id}" style="height:48px;padding:0 22px;border-radius:999px;border:none;background:var(--red);color:#fff;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer;white-space:nowrap">Ver empreendimento →</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }
-
   q('carrosselBody').innerHTML = `
     <div id="stage" data-reveal style="position:relative;height:560px;margin-top:30px;perspective:1600px;cursor:grab;touch-action:pan-y;user-select:none">
       <div id="track" style="position:absolute;inset:0;transform-style:preserve-3d">${cardsHtml}</div>
     </div>
-    ${zoomHtml}
   `;
   stageEl=q('stage'); trackEl=q('track');
   bindCarouselDrag();
@@ -483,15 +456,31 @@ function layoutCarousel(){
   const el=trackEl.children, n=el.length; if(!n) return;
   const step=0.40, R=900, D=560;
   for(let i=0;i<n;i++){
-    let rel=((i-pos)%n+n)%n; if(rel>n/2) rel-=n;
     const card=el[i];
     const s=card.style;
+    if(state.zoom===i){
+      // This card pops out of the arc: comes toward the camera and grows
+      // slightly, instead of opening a separate floating modal.
+      s.transform=`translate(-50%,-50%) translate3d(0px,0,220px) scale(1.16)`;
+      s.opacity=1; s.zIndex=9000; s.pointerEvents='auto'; s.filter='none';
+      const img=card.querySelector('img[data-src]');
+      if(img){ img.src=img.dataset.src; img.removeAttribute('data-src'); }
+      continue;
+    }
+    let rel=((i-pos)%n+n)%n; if(rel>n/2) rel-=n;
     const ang=rel*step;
     const x=Math.sin(ang)*R, z=-Math.cos(ang)*D, ry=-ang*50;
-    const op=1-Math.min(Math.max(Math.abs(rel)-2.3,0)/1.5,1);
+    let op=1-Math.min(Math.max(Math.abs(rel)-2.3,0)/1.5,1);
     s.transform=`translate(-50%,-50%) translate3d(${x}px,0,${z}px) rotateY(${ry}deg)`;
-    s.opacity=op; s.zIndex=Math.round(2000+z); s.pointerEvents=op>0.3?'auto':'none';
-    s.filter = state.zoom!=null ? 'brightness(.55)' : 'none';
+    s.zIndex=Math.round(2000+z);
+    if(state.zoom!=null){
+      // Dim the rest while one card is popped forward, like a spotlight.
+      op=op*0.25;
+      s.filter='brightness(.7)';
+    } else {
+      s.filter='none';
+    }
+    s.opacity=op; s.pointerEvents=op>0.2?'auto':'none';
     // Lazy-load: only fetch the photo once this card is near the visible front,
     // so opening the page with a large catalog doesn't fire hundreds of image
     // requests at once (and trip Supabase Storage rate limits).
@@ -515,12 +504,18 @@ function bindCarouselDrag(){
 const ACTIONS={
   goHome(){ state.screen='home'; state.zoom=null; q('homeScreen').style.display='block'; q('empScreen').style.display='none'; window.scrollTo({top:0}); },
   toggleTheme(){ state.theme = state.theme==='light'?'dark':'light'; q('root').dataset.theme=state.theme; q('themeBtn').textContent = state.theme==='light'?'☾':'☀'; },
-  cardClick(t){ if(movedC) return; const idx=+t.dataset.idx; const nz = state.zoom===idx?null:idx; if(nz!=null) pos=idx; state.zoom=nz; renderCarousel(); },
+  cardClick(t){ if(movedC) return; const idx=+t.dataset.idx; state.zoom = state.zoom===idx?null:idx; renderCarousel(); },
   zoomClose(){ state.zoom=null; renderCarousel(); },
   openEmp(t){ const id=t.dataset.id; state.screen='emp'; state.currentId=id; state.zoom=null; renderEmpScreen(); q('homeScreen').style.display='none'; q('empScreen').style.display='block'; window.scrollTo({top:0}); },
   selectTip(t){ const eid = filtered()[+t.dataset.idx]?.id; if(!eid) return; state.sel[eid]=+t.dataset.tip; renderCarousel(); },
   selectTip2(t){ state.tip2[state.currentId]=+t.dataset.tip; renderEmpScreen(); },
   noop(){},
+  toggleCompare(t){
+    const extra=q('compareExtra'); if(!extra) return;
+    const nowShowing = extra.style.display==='none';
+    extra.style.display = nowShowing?'block':'none';
+    t.textContent = nowShowing ? 'Ver menos ↑' : t.dataset.labelShow;
+  },
 };
 
 document.addEventListener('click', e=>{
@@ -572,7 +567,7 @@ function renderTestimonials(){
 function layoutTestimonials(){
   if(!track2El) return;
   const el=track2El.children, n=el.length; if(!n) return;
-  const step=0.42, R=840, D=440;
+  const step=0.58, R=1000, D=420;
   for(let i=0;i<n;i++){
     let rel=((i-pos2)%n+n)%n; if(rel>n/2) rel-=n;
     const ang=rel*step;
@@ -597,7 +592,7 @@ function bairroCounts(){
 }
 
 function renderBairroCards(){
-  const top=bairroCounts().slice(0,5);
+  const top=bairroCounts().slice(0,8);
   q('bairrosCardsGrid').innerHTML = top.map(([nome,qtd])=>{
     const sample = EMPS.find(e=>e.bairro===nome);
     const mob = sample && sample.bairroTxt.startsWith('Próximo de') ? sample.bairroTxt.replace('Próximo de ','').split(' (')[0] : '';
@@ -628,7 +623,7 @@ function renderStats(){
     {v:totalUnidades.toLocaleString('pt-BR'),l:'unidades no total'},
     {v:incs,l:'incorporadoras'},
   ];
-  q('statsGrid').innerHTML = stats.map(s=>`<div><div class="serif" style="font-size:clamp(34px,5vw,52px);color:var(--red);line-height:1">${s.v}</div><div style="color:var(--muted);font-size:13.5px;margin-top:8px;font-weight:500">${s.l}</div></div>`).join('');
+  q('statsGrid').innerHTML = stats.map(s=>`<div><div class="serif" style="font-size:clamp(24px,4vw,52px);color:var(--red);line-height:1;white-space:nowrap">${s.v}</div><div style="color:var(--muted);font-size:13.5px;margin-top:8px;font-weight:500">${s.l}</div></div>`).join('');
 }
 
 function renderCompare(){
@@ -643,14 +638,21 @@ function renderCompare(){
     const mob = sample ? sample.bairroTxt.replace('Próximo de ','').split(' (')[0].split(' ')[0] : '—';
     return {bairro:b, m2:fmt(m2), qtd:es.length, ticket:fmtK(ticket), mob};
   }).filter(Boolean);
-  q('compareRows').innerHTML = rows.map(c=>`
+  const rowHtml = c=>`
     <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr .9fr;gap:0;padding:15px 20px;border-top:1px solid var(--card-brd);align-items:center;font-size:14.5px">
       <span style="font-weight:600">${esc(c.bairro)}</span>
       <span style="color:var(--muted)">${c.m2}</span>
       <span style="color:var(--muted)">${c.qtd}</span>
       <span style="color:var(--muted)">${c.ticket}</span>
       <span><span style="padding:3px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--card-brd);font-size:12.5px;font-weight:600;color:var(--gold)">${esc(c.mob)}</span></span>
-    </div>`).join('');
+    </div>`;
+  const VISIBLE=10;
+  const head=rows.slice(0,VISIBLE), rest=rows.slice(VISIBLE);
+  q('compareRows').innerHTML = head.map(rowHtml).join('') + (rest.length?`
+    <div id="compareExtra" style="display:none">${rest.map(rowHtml).join('')}</div>
+    <div style="padding:16px 20px;border-top:1px solid var(--card-brd);text-align:center">
+      <button id="compareToggleBtn" data-act="toggleCompare" data-label-show="Ver mais ${rest.length} bairros ↓" style="height:42px;padding:0 20px;border-radius:999px;border:1px solid var(--card-brd);background:var(--surface);color:var(--text);font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer">Ver mais ${rest.length} bairros ↓</button>
+    </div>`:'');
 }
 
 function renderFooterBairros(){
