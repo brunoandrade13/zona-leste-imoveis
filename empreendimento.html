@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Empreendimento — Zona Leste Lançamentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'General Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  :root{
+    --bg:#FFFFFF;--text:#111111;--muted:#6B6F76;--red:#9E1B1B;--gold:#C9A227;
+    --glass:rgba(255,255,255,.20);--glass-brd:rgba(17,17,17,.05);
+    --card:#FFFFFF;--card-brd:rgba(17,17,17,.09);--surface:#F6F6F4;
+    --shadow:0 12px 40px rgba(17,17,17,.10);--ph1:#EDEBE6;--ph2:#E2DFD8;
+  }
+  [data-theme="dark"]{
+    --bg:#0B0D10;--text:#FFFFFF;--muted:#A8ACB3;
+    --glass:rgba(16,19,24,.18);--glass-brd:rgba(255,255,255,.08);
+    --card:#12151A;--card-brd:rgba(255,255,255,.10);--surface:#111418;
+    --shadow:0 16px 44px rgba(0,0,0,.55);--ph1:#1A1E24;--ph2:#22272E;
+  }
+  a{color:var(--red);text-decoration:none}
+  a:hover{color:var(--gold)}
+  .serif{font-family:'Newsreader',Georgia,serif;font-style:italic;font-weight:500}
+  .reveal-init{opacity:0;transform:translateY(34px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
+  .reveal-in{opacity:1 !important;transform:none}
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+  .hoverop:hover{opacity:1 !important;background:var(--surface)}
+  .hovertheme:hover{filter:brightness(1.08)}
+  .hoverlogin:hover{background:var(--gold) !important;color:#111 !important}
+  .hoverlogin:hover .arrow{transform:translateX(3px)}
+  .thumb:hover{filter:brightness(.85)}
+  .btn-red:hover{background:var(--gold) !important;color:#111 !important}
+  .btn-ghost:hover{border-color:var(--red) !important;color:var(--red) !important}
+  .similar-card:hover{transform:translateY(-5px);box-shadow:0 26px 52px -16px rgba(17,17,17,.45)}
+  input[type=range]{accent-color:var(--red)}
+  #loadOverlay{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+
+<div id="loadOverlay">Carregando empreendimento…</div>
+
+<div id="root" data-theme="light" style="min-height:100vh;background:var(--bg);color:var(--text);display:none">
+  <header style="position:fixed;top:0;left:0;right:0;z-index:50;background:transparent;padding-top:20px">
+    <div style="display:flex;align-items:center;justify-content:center;padding:0 20px">
+      <div style="display:flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:8px 8px 8px 16px;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.12)">
+        <a href="novo-index.html" style="display:flex;align-items:center;gap:9px;padding-right:6px">
+          <span style="width:30px;height:30px;border-radius:8px;background:var(--red);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px">ZL</span>
+          <span style="font-weight:600;font-size:15.5px;letter-spacing:-.01em;white-space:nowrap;color:var(--text)">Zona Leste</span>
+        </a>
+        <nav style="display:flex;align-items:center;gap:2px">
+          <a href="empreendimentos.html" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Empreendimentos</a>
+          <a href="novo-index.html#bairros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Bairros</a>
+          <a href="#simulacao" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Faça sua simulação</a>
+        </nav>
+        <button id="themeBtn" data-act="toggleTheme" title="Alternar tema" class="hovertheme" style="width:38px;height:38px;border-radius:999px;border:none;background:var(--surface);cursor:pointer;color:var(--text);display:grid;place-items:center;font-size:15px;flex-shrink:0">☾</button>
+        <button class="hoverlogin" style="height:38px;padding:0 18px;border-radius:999px;border:none;background:var(--red);cursor:pointer;color:#fff;font-family:inherit;font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;white-space:nowrap"><span>Entrar</span><span class="arrow" style="transition:transform .25s">→</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main style="max-width:1320px;margin:0 auto;padding:0 24px 90px" id="pageMain"></main>
+</div>
+
+<div id="galleryRoot"></div>
+
+<script>
+"use strict";
+const SB='https://xmnggeptpwxsmcartyzt.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtbmdnZXB0cHd4c21jYXJ0eXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NjkzMzIsImV4cCI6MjA5NzE0NTMzMn0.2HWGvTAuEuzEHXcEbOr9t0gC1yc765lxQxk080EDmfg';
+const H={apikey:KEY,Authorization:`Bearer ${KEY}`};
+const STATUS_LABELS={lancamento:'Lançamento',na_planta:'Na planta',pronto:'Pronto p/ morar',breve_lancamento:'Breve lançamento',em_construcao:'Em construção'};
+const STATUS_COLORS={'Lançamento':'#C9A227','Breve lançamento':'#C9A227','Em construção':'#3B5B8C','Na planta':'#7A4C6B','Pronto p/ morar':'#4C7A5B'};
+const AMENITY_GROUPS=[
+  {label:'Piscina', match:i=>/piscina/i.test(i)},
+  {label:'Academia', match:i=>/academia|fitness|cross training|espaço funcional/i.test(i)},
+  {label:'Salão de festas', match:i=>/sal[aã]o de festas/i.test(i)},
+  {label:'Playground / kids', match:i=>/playground|brinquedoteca|espaço kids/i.test(i)},
+  {label:'Espaço gourmet / churrasqueira', match:i=>/gourmet|churrasqueira/i.test(i)},
+  {label:'Coworking', match:i=>/coworking/i.test(i)},
+  {label:'Espaço pet', match:i=>/pet/i.test(i)},
+  {label:'Bicicletário', match:i=>/bicicletário/i.test(i)},
+  {label:'Salão de jogos', match:i=>/sal[aã]o de jogos/i.test(i)},
+  {label:'Sauna', match:i=>/sauna/i.test(i)},
+  {label:'Espaço delivery', match:i=>/delivery/i.test(i)},
+  {label:'Mercadinho', match:i=>/mini\s*mercado|minimercado|mini\s*market/i.test(i)},
+];
+const PROX_ICON={metro:'🚇',shopping:'🛒',parque:'🌳',escola:'🏫',hospital:'🏥',supermercado:'🛒',outro:'◆'};
+const PROX_LABEL={metro:'Transporte',shopping:'Compras & lazer',parque:'Lazer',escola:'Educação',hospital:'Saúde',supermercado:'Conveniência',outro:'Nas redondezas'};
+
+const q=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>'R$ '+Math.round(n).toLocaleString('pt-BR');
+const PLACEHOLDER_IMG='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="%23EDEBE6"/></svg>');
+
+async function sbFetch(path,params={}){
+  const u=new URL(`${SB}/rest/v1/${path}`);
+  for(const[k,v]of Object.entries(params))u.searchParams.set(k,v);
+  const r=await fetch(u,{headers:{...H,'Range':'0-9999'}});
+  return r.json();
+}
+function statusBadge(status){
+  const c=STATUS_COLORS[status]||'#6B6F76';
+  return `position:absolute;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;color:#fff;background:${c};box-shadow:0 2px 10px rgba(0,0,0,.35)`;
+}
+function comodidadeIcon(label){
+  const l=label.toLowerCase();
+  if(l.includes('piscina'))return'🏊'; if(l.includes('academia')||l.includes('fitness'))return'🏋';
+  if(l.includes('gourmet')||l.includes('festas'))return'🍽'; if(l.includes('cowork'))return'💻';
+  if(l.includes('pet'))return'🐾'; if(l.includes('playground')||l.includes('kids'))return'🪁';
+  if(l.includes('quadra'))return'⛹'; if(l.includes('bicicle'))return'🚲'; if(l.includes('lavanderia'))return'🧺';
+  if(l.includes('rooftop')||l.includes('vista'))return'🌇'; if(l.includes('portaria')||l.includes('seguran'))return'🛡';
+  if(l.includes('salão')||l.includes('jogos'))return'🪑'; if(l.includes('sauna'))return'🧘'; if(l.includes('delivery'))return'📦';
+  if(l.includes('mercad'))return'🛒'; return'◆';
+}
+function youtubeEmbed(url){
+  if(!url) return null;
+  try{
+    const u=new URL(url);
+    if(!/youtube\.com|youtu\.be/.test(u.hostname)) return null;
+    let id=null;
+    if(u.hostname.includes('youtu.be')) id=u.pathname.slice(1);
+    else if(u.pathname==='/watch') id=u.searchParams.get('v');
+    else if(u.pathname.startsWith('/embed/')) id=u.pathname.split('/embed/')[1];
+    if(!id) return null;
+    return `https://www.youtube.com/embed/${id}`;
+  }catch(_){ return null; }
+}
+
+let EMP=null, CATALOG=[];
+const state={ theme:'light', tipIdx:0, obraUnlocked:false, sim:{entradaPct:20, anos:30}, galleryOpen:false };
+
+async function loadDetail(id){
+  const[rows,tips,imgs,lazer,prox]=await Promise.all([
+    sbFetch('empreendimentos',{select:'*',id:'eq.'+id,limit:'1'}),
+    sbFetch('empreendimento_tipologias',{select:'*',empreendimento_id:'eq.'+id,ativo:'eq.true',order:'area_m2.asc'}),
+    sbFetch('empreendimento_imagens',{select:'url,tipo,ordem',empreendimento_id:'eq.'+id,ativo:'eq.true',order:'ordem.asc'}),
+    sbFetch('lazer',{select:'item,categoria',empreendimento_id:'eq.'+id}),
+    sbFetch('proximidades',{select:'nome,categoria,distancia_metros',empreendimento_id:'eq.'+id}),
+  ]);
+  return processDetail(rows[0], tips, imgs, lazer, prox);
+}
+function pickImg(list,tipo){ const arr=list.filter(i=>i.tipo===tipo); return arr.length?arr[0].url:null; }
+
+function processDetail(e, tipsRaw, imgsRaw, lazerRaw, proxRaw){
+  if(!e) return null;
+  const fachada=pickImg(imgsRaw,'fachada')||pickImg(imgsRaw,'perspectiva_3d')||imgsRaw[0]?.url||null;
+  const interna=pickImg(imgsRaw,'interiores')||pickImg(imgsRaw,'perspectiva_3d')||fachada;
+  const facilidades=pickImg(imgsRaw,'lazer')||fachada;
+  const planta=pickImg(imgsRaw,'planta');
+
+  let tips=tipsRaw.map(t=>({area:+t.area_m2||0,quartos:t.quartos??0,vagas:t.vagas??0,suites:t.suites??0,banheiros:t.banheiros??0,preco:+t.preco_a_partir||0})).filter(t=>t.preco>0);
+  if(!tips.length) tips=[{area:+e.area_min_m2||0,quartos:e.tipo_min_quartos??0,vagas:0,suites:0,banheiros:0,preco:+e.preco_min||0}];
+  tips.sort((a,b)=>a.area-b.area);
+
+  const difsRaw=(e.diferenciais_apto||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const rawItems=lazerRaw.map(l=>l.item||'');
+  const amenityLabels=AMENITY_GROUPS.filter(g=>rawItems.some(i=>g.match(i))).map(g=>g.label);
+  if(e.rooftop) amenityLabels.push('Rooftop');
+  const comodidades=[...new Set([...difsRaw, ...amenityLabels])].slice(0,12).map(l=>({label:l, icon:comodidadeIcon(l)}));
+  const difsChips=difsRaw.length?difsRaw.slice(0,4):(amenityLabels.slice(0,4).length?amenityLabels.slice(0,4):['Consultar diferenciais com o corretor']);
+
+  const locais=proxRaw.map(p=>({
+    nome:p.nome, tipo:PROX_LABEL[p.categoria]||'Nas redondezas', icon:PROX_ICON[p.categoria]||'◆',
+    dist: p.distancia_metros!=null ? (p.distancia_metros>=1000?(p.distancia_metros/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' km':p.distancia_metros+' m') : null,
+  }));
+  if(e.nome_metro_proximo) locais.unshift({nome:e.nome_metro_proximo, tipo:'Transporte', icon:'🚇', dist:e.dist_metro_metros?e.dist_metro_metros+' m':null});
+  if(e.nome_shopping_proximo) locais.push({nome:e.nome_shopping_proximo, tipo:'Compras & lazer', icon:'🛒', dist:e.dist_shopping_metros?e.dist_shopping_metros+' m':null});
+
+  const endereco=[e.logradouro,e.numero&&e.numero!=='S/N'?e.numero:null].filter(Boolean).join(', ')||(e.bairro_comercial||e.bairro||'Zona Leste');
+  const bairroTxt = e.nome_metro_proximo
+    ? `Próximo de ${e.nome_metro_proximo}${e.dist_metro_metros?` (${e.dist_metro_metros}m)`:''}${e.nome_shopping_proximo?` e de ${e.nome_shopping_proximo}`:''}. ${e.bairro_comercial||e.bairro} é um dos bairros com oferta ativa de lançamentos na Zona Leste.`
+    : `${e.bairro_comercial||e.bairro} é um dos bairros com oferta ativa de lançamentos na Zona Leste.`;
+
+  const galeria=imgsRaw.length?imgsRaw.map(i=>i.url):[fachada].filter(Boolean);
+
+  return {
+    id:e.id, nome:e.nome, status:STATUS_LABELS[e.status]||e.status||'—',
+    incorporadora:e.incorporadora||'—', bairro:e.bairro_comercial||e.bairro||'Zona Leste', bairroOficial:e.bairro||'',
+    entrega:e.mes_entrega||'A definir', endereco, fachada, interna, facilidades, planta,
+    galeria, tips, comodidades, difsChips, locais, bairroTxt,
+    lat:e.latitude!=null?parseFloat(e.latitude):null, lng:e.longitude!=null?parseFloat(e.longitude):null,
+    fase:e.fase_obra_pct??0, unidades:e.total_unidades||0,
+    mcmv: e.enquadrado_mcmv ? (e.faixa_mcmv?`Sim (${e.faixa_mcmv})`:'Sim') : 'Não',
+    urlVideo: youtubeEmbed(e.url_video_youtube),
+  };
+}
+
+async function loadCatalogLite(){
+  const[emps,tips,imgs]=await Promise.all([
+    sbFetch('empreendimentos',{select:'id,nome,bairro,bairro_comercial,status',ativo:'eq.true',limit:'500'}),
+    sbFetch('empreendimento_tipologias',{select:'empreendimento_id,area_m2,quartos,preco_a_partir',ativo:'eq.true',limit:'3000'}),
+    sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,tipo,ordem',ativo:'eq.true',tipo:'eq.fachada',order:'empreendimento_id,ordem',limit:'2000'}),
+  ]);
+  const tipsBy={}, imgBy={};
+  tips.forEach(t=>{ (tipsBy[t.empreendimento_id]=tipsBy[t.empreendimento_id]||[]).push(t); });
+  imgs.forEach(i=>{ if(!imgBy[i.empreendimento_id]) imgBy[i.empreendimento_id]=i.url; });
+  return emps.map(e=>{
+    const et=tipsBy[e.id]||[];
+    const minPreco=et.length?Math.min(...et.map(t=>+t.preco_a_partir||Infinity)):0;
+    const qs=et.map(t=>t.quartos);
+    return {
+      id:e.id, nome:e.nome, bairro:e.bairro_comercial||e.bairro||'Zona Leste',
+      status:STATUS_LABELS[e.status]||e.status||'—', fachada:imgBy[e.id]||null,
+      minPreco: isFinite(minPreco)?minPreco:0,
+      qmin: qs.length?Math.min(...qs):0, qmax: qs.length?Math.max(...qs):0,
+      area: et.length?(et.reduce((a,t)=>+t.area_m2<a?+t.area_m2:a,+et[0].area_m2||0)):0,
+    };
+  });
+}
+
+function similaresFor(emp, catalog){
+  return catalog.filter(x=>x.id!==emp.id)
+    .map(x=>({x, score:(x.bairro===emp.bairro?0:1)*1e9 + Math.abs(x.minPreco-Math.min(...emp.tips.map(t=>t.preco)))}))
+    .sort((a,b)=>a.score-b.score).slice(0,6).map(o=>o.x);
+}
+
+/* ---------------- ACTIONS ---------------- */
+const ACTIONS={
+  toggleTheme(){ state.theme=state.theme==='light'?'dark':'light'; q('root').dataset.theme=state.theme; q('themeBtn').textContent=state.theme==='light'?'☾':'☀'; },
+  pickTip(t){ state.tipIdx=+t.dataset.idx; renderPage(); },
+  unlockObra(){
+    const nome=q('leadNome')?.value?.trim(), contato=q('leadContato')?.value?.trim();
+    if(!nome||!contato){ alert('Preencha nome e contato para liberar.'); return; }
+    state.obraUnlocked=true; renderPage();
+  },
+  openGallery(){ state.galleryOpen=true; renderGallery(); },
+  closeGallery(){ state.galleryOpen=false; renderGallery(); },
+  noop(){},
+  openEmp(t){ window.location.href='empreendimento.html?id='+encodeURIComponent(t.dataset.id); },
+  simEntrada(t){ state.sim.entradaPct=+t.value; renderPage({keepScroll:true}); },
+  simAnos(t){ state.sim.anos=+t.value; renderPage({keepScroll:true}); },
+};
+document.addEventListener('click', e=>{
+  const t=e.target.closest('[data-act]');
+  if(!t) return;
+  ACTIONS[t.dataset.act]?.(t,e);
+});
+document.addEventListener('input', e=>{
+  const t=e.target.closest('[data-act="simEntrada"],[data-act="simAnos"]');
+  if(!t) return;
+  ACTIONS[t.dataset.act]?.(t,e);
+});
+
+/* ---------------- RENDER ---------------- */
+let leafletMap=null;
+function renderMap(emp){
+  const el=q('mapEl');
+  if(!el || !window.L || emp.lat==null || emp.lng==null) return;
+  if(leafletMap){ try{leafletMap.remove();}catch(_){} }
+  const L=window.L;
+  leafletMap=L.map(el,{scrollWheelZoom:false}).setView([emp.lat,emp.lng],15);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(leafletMap);
+  const icon=L.divIcon({className:'',iconSize:[0,0],html:'<div style="display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%)"><div style="background:#9E1B1B;color:#fff;font:600 12px/1 sans-serif;padding:6px 9px;border-radius:9px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.4)">🏢 '+emp.nome.split(' ').slice(0,3).join(' ')+'</div><div style="width:2px;height:8px;background:#9E1B1B;margin:0 auto"></div></div>'});
+  L.marker([emp.lat,emp.lng],{icon,zIndexOffset:1000}).addTo(leafletMap);
+  setTimeout(()=>{ try{leafletMap.invalidateSize();}catch(_){} },250);
+}
+
+function renderGallery(){
+  if(!state.galleryOpen){ q('galleryRoot').innerHTML=''; return; }
+  q('galleryRoot').innerHTML=`
+    <div data-act="closeGallery" style="position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.92);display:flex;flex-direction:column;padding:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;color:#fff;margin-bottom:16px">
+        <span style="font-size:15px;font-weight:600">${esc(EMP.nome)} · fotos (${EMP.galeria.length})</span>
+        <button data-act="closeGallery" style="width:40px;height:40px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;cursor:pointer;font-size:16px">✕</button>
+      </div>
+      <div data-act="noop" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-content:start">
+        ${EMP.galeria.map(g=>`<div style="border-radius:14px;overflow:hidden;background:#111;aspect-ratio:4/3"><img src="${esc(g)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderPage(opts){
+  const emp=EMP;
+  const tipIdx=Math.min(state.tipIdx, emp.tips.length-1);
+  const t=emp.tips[tipIdx];
+  const minT=emp.tips.reduce((a,x)=>x.preco<a.preco?x:a, emp.tips[0]);
+  const qLabel=tp=>tp.quartos===0?'Studio':tp.quartos+' quartos';
+  const qMax=Math.max(...emp.tips.map(x=>x.quartos)), qMin=Math.min(...emp.tips.map(x=>x.quartos));
+  const aMax=Math.max(...emp.tips.map(x=>x.area)), aMin=Math.min(...emp.tips.map(x=>x.area));
+  const vMax=Math.max(...emp.tips.map(x=>x.vagas));
+
+  const heroChips=[
+    '⌂ '+(qMax===0?'Studio':(qMin===qMax?qMax:qMin+'–'+qMax)+' quartos'),
+    '▱ '+(aMin===aMax?aMin:aMin+'–'+aMax)+' m²',
+    '⛃ até '+vMax+' vaga(s)',
+    '⚑ Entrega '+emp.entrega,
+  ];
+
+  // Financing simulator (illustrative, SAC-ish price formula) — used both for
+  // the simulator section and to derive a suggested household income
+  // (installment ≈ 30% of income is a common affordability rule of thumb).
+  const i=0.095/12, n=state.sim.anos*12;
+  const preco=t.preco, entrada=preco*(state.sim.entradaPct/100), financiado=preco-entrada;
+  const parcela=financiado*(i*Math.pow(1+i,n))/(Math.pow(1+i,n)-1);
+  const rendaSugerida=parcela/0.3;
+
+  const galeriaPreview=[emp.fachada, emp.interna, emp.facilidades, emp.interna, emp.facilidades].filter(Boolean);
+  const galeriaMais=Math.max(emp.galeria.length-4,0);
+
+  const similares=similaresFor(emp, CATALOG);
+
+  const videoBlock = emp.urlVideo
+    ? `<div style="border-radius:18px;overflow:hidden;border:1px solid var(--card-brd)"><iframe width="100%" height="480" style="display:block;max-height:56vw" src="${esc(emp.urlVideo)}" title="Vídeo" frameborder="0" allowfullscreen></iframe></div>`
+    : `<div style="height:min(480px,56vw);border-radius:18px;background:#000;display:grid;place-items:center;color:rgba(255,255,255,.6);font-size:15px;border:1px solid var(--card-brd)">▶ Vídeo do YouTube · adicionar quando disponível</div>`;
+
+  q('pageMain').innerHTML = `
+    <div style="position:relative;width:100vw;margin-left:calc(50% - 50vw);height:100vh;overflow:hidden;background:var(--ph1)">
+      <img src="${esc(emp.fachada||PLACEHOLDER_IMG)}" alt="${esc(emp.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,.05) 30%,rgba(0,0,0,.25) 55%,rgba(0,0,0,.9) 100%)"></div>
+      <a href="empreendimentos.html" style="position:absolute;top:88px;left:24px;z-index:5;display:flex;align-items:center;gap:7px;height:42px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);backdrop-filter:blur(8px);color:#fff;font-family:inherit;font-size:14px;font-weight:500">← voltar ao catálogo</a>
+      <span style="${statusBadge(emp.status)}top:88px;right:24px">${esc(emp.status)}</span>
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:0 24px">
+        <div style="max-width:1320px;margin:0 auto;padding:0 0 54px;color:#fff">
+          <div style="font-size:15px;opacity:.9;margin-bottom:8px;text-shadow:0 1px 4px rgba(0,0,0,.5)">${esc(emp.incorporadora)} · ${esc(emp.bairro)}</div>
+          <h1 style="font-size:clamp(36px,6vw,72px);font-weight:600;letter-spacing:-.02em;line-height:1.02;text-shadow:0 2px 14px rgba(0,0,0,.5)">${esc(emp.nome)}</h1>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:18px">
+            <div style="display:flex;align-items:flex-start;gap:6px;font-size:15px;opacity:.92"><span style="color:var(--gold);margin-top:2px">◎</span><span style="text-shadow:0 1px 4px rgba(0,0,0,.5)">${esc(emp.endereco)}</span></div>
+            <div style="text-align:right">
+              <div style="font-size:13px;opacity:.8">A partir de</div>
+              <div style="font-size:clamp(28px,3.4vw,38px);font-weight:600;letter-spacing:-.01em;text-shadow:0 1px 10px rgba(0,0,0,.5)">${fmt(minT.preco)}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px">
+            ${heroChips.map(h=>`<span style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:11px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(6px);font-size:13.5px;font-weight:500;color:#fff">${esc(h)}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.7);font-size:12px;letter-spacing:.1em;text-transform:uppercase;animation:bob 1.8s ease-in-out infinite">↓ role para ver tudo</div>
+    </div>
+
+    <div style="padding-top:48px">
+
+    <section data-reveal>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h2 style="font-size:clamp(20px,2.4vw,26px);font-weight:600;letter-spacing:-.02em">Galeria</h2>
+        <button data-act="openGallery" style="display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:10px;border:1px solid var(--card-brd);background:var(--card);color:var(--text);font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer" class="btn-ghost">▦ Todas (${emp.galeria.length})</button>
+      </div>
+      <div style="display:flex;gap:10px;height:190px">
+        <div data-act="openGallery" class="thumb" style="flex:2.4;position:relative;border-radius:14px;overflow:hidden;background:var(--ph1);cursor:pointer"><img src="${esc(galeriaPreview[0]||PLACEHOLDER_IMG)}" alt="${esc(emp.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block"></div>
+        <div style="flex:1;display:grid;grid-template-rows:1fr 1fr;grid-template-columns:1fr 1fr;gap:10px">
+          ${['Interno','Lazer','Fachada'].map((lbl,i)=>`
+          <div data-act="openGallery" class="thumb" style="position:relative;border-radius:11px;overflow:hidden;background:var(--ph1);cursor:pointer"><img src="${esc(galeriaPreview[i+1]||galeriaPreview[0]||PLACEHOLDER_IMG)}" alt="${lbl}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block"><span style="position:absolute;left:6px;bottom:5px;font-size:10px;font-weight:600;color:#fff;background:rgba(0,0,0,.5);padding:2px 6px;border-radius:5px;backdrop-filter:blur(4px)">${lbl}</span></div>`).join('')}
+          <div data-act="openGallery" class="thumb" style="position:relative;border-radius:11px;overflow:hidden;background:var(--ph1);cursor:pointer"><img src="${esc(galeriaPreview[0]||PLACEHOLDER_IMG)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">${galeriaMais>0?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;color:#fff;font-weight:600;font-size:13px">+${galeriaMais}</div>`:''}</div>
+        </div>
+      </div>
+    </section>
+
+    <div data-reveal style="display:grid;grid-template-columns:1.4fr 1fr;gap:20px;margin-top:40px">
+      <div style="border:1px solid var(--card-brd);border-radius:20px;background:var(--card);box-shadow:var(--shadow);padding:24px 26px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <span style="font-weight:600;font-size:16px">Status da obra</span>
+          <span style="font-weight:600;font-size:14px;color:var(--red)">${emp.fase}% concluído</span>
+        </div>
+        <div style="height:10px;border-radius:999px;background:var(--surface);overflow:hidden;margin-bottom:20px">
+          <div style="height:100%;width:${emp.fase}%;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:999px"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          ${[['Entrega',emp.entrega],['Unidades',emp.unidades||'—'],['Tipologias',emp.tips.length]].map(([k,v])=>`
+          <div><div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:3px">${esc(k)}</div><div style="font-size:16px;font-weight:600">${esc(v)}</div></div>`).join('')}
+        </div>
+      </div>
+      <div style="border:1px solid var(--card-brd);border-radius:20px;background:var(--surface);padding:24px 26px;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Renda familiar sugerida (estimativa)</div>
+        <div style="font-size:24px;font-weight:600;letter-spacing:-.01em;margin-bottom:10px">${fmt(rendaSugerida)}/mês</div>
+        <div style="font-size:13px;color:var(--muted)">Enquadramento MCMV: <span style="color:var(--text);font-weight:600">${esc(emp.mcmv)}</span></div>
+      </div>
+    </div>
+
+    <section data-reveal style="margin-top:56px">
+      <h2 style="font-size:clamp(24px,3vw,34px);font-weight:600;letter-spacing:-.02em;margin-bottom:6px">Quadro de <span class="serif" style="color:var(--red)">áreas</span></h2>
+      <p style="color:var(--muted);font-size:15px;margin-bottom:20px">Selecione uma metragem — a planta, o preço e a simulação abrem aqui embaixo, sem sair da página.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+        ${emp.tips.map((tp,idx)=>`<button data-act="pickTip" data-idx="${idx}" style="text-align:left;font-family:inherit;padding:12px 18px;border-radius:14px;cursor:pointer;color:${idx===tipIdx?'#fff':'var(--text)'};border:1px solid ${idx===tipIdx?'var(--red)':'var(--card-brd)'};background:${idx===tipIdx?'var(--red)':'var(--card)'}">
+          <span style="font-weight:600;font-size:16px">${tp.area} m²</span>
+          <span style="display:block;font-size:12px;opacity:.75;margin-top:2px">${qLabel(tp)} · ${tp.vagas} vaga(s)</span>
+        </button>`).join('')}
+      </div>
+      <div style="border:1px solid var(--card-brd);border-radius:20px;overflow:hidden;background:var(--card);box-shadow:var(--shadow);display:grid;grid-template-columns:1fr 1fr">
+        <div style="position:relative;min-height:320px;background:var(--surface);border-right:1px solid var(--card-brd)">
+          ${emp.planta?`<img src="${esc(emp.planta)}" alt="Planta" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain">`:`<div style="position:absolute;inset:34px;border:1.5px dashed var(--muted);opacity:.4;border-radius:10px"></div>`}
+          <span style="position:absolute;left:16px;top:14px;font-size:12px;color:var(--muted);background:var(--card);padding:3px 8px;border-radius:6px">planta · ${t.area} m²</span>
+        </div>
+        <div style="padding:26px 28px;display:flex;flex-direction:column;justify-content:center">
+          <div style="color:var(--muted);font-size:13.5px">${qLabel(t)} · ${t.vagas} vaga(s) · ${t.area} m²</div>
+          <div style="font-size:34px;font-weight:600;letter-spacing:-.02em;margin:6px 0 3px">${fmt(t.preco)}</div>
+          <div style="color:var(--muted);font-size:13px;margin-bottom:22px">≈ ${fmt(t.preco/t.area)} /m²</div>
+          <a href="#simulacao" style="height:50px;background:var(--red);color:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px" class="btn-red">Simular financiamento</a>
+          <button style="height:46px;margin-top:10px;background:transparent;color:var(--text);border:1px solid var(--card-brd);border-radius:12px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer">Falar com corretor</button>
+        </div>
+      </div>
+    </section>
+
+    <section data-reveal style="margin-top:56px">
+      <h2 style="font-size:clamp(24px,3vw,34px);font-weight:600;letter-spacing:-.02em;margin-bottom:8px">Comodidades & <span class="serif" style="color:var(--red)">lazer</span></h2>
+      <p style="color:var(--muted);font-size:15px;margin-bottom:20px">Estrutura de áreas comuns do empreendimento.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">
+        ${emp.comodidades.map(c=>`<div style="display:flex;align-items:center;gap:11px;border:1px solid var(--card-brd);border-radius:13px;padding:14px 16px;background:var(--card);font-size:14.5px;font-weight:500"><span style="color:var(--gold);font-size:16px">${c.icon}</span>${esc(c.label)}</div>`).join('')}
+      </div>
+    </section>
+
+    <section data-reveal style="margin-top:56px">
+      <h2 style="font-size:clamp(24px,3vw,34px);font-weight:600;letter-spacing:-.02em;margin-bottom:20px">Localização & <span class="serif" style="color:var(--red)">o que está perto</span></h2>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:22px">
+        <div id="mapEl" style="min-height:420px;border-radius:16px;overflow:hidden;border:1px solid var(--card-brd);background:var(--surface);position:relative;z-index:0"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto">
+          ${emp.locais.length?emp.locais.map(l=>`
+          <div style="display:flex;align-items:center;gap:13px;border:1px solid var(--card-brd);border-radius:13px;padding:13px 16px;background:var(--card)">
+            <span style="width:38px;height:38px;flex-shrink:0;border-radius:10px;background:var(--surface);display:grid;place-items:center;font-size:17px">${l.icon}</span>
+            <div style="flex:1"><div style="font-size:14.5px;font-weight:600">${esc(l.nome)}</div><div style="font-size:12.5px;color:var(--muted)">${esc(l.tipo)}</div></div>
+            ${l.dist?`<span style="font-size:13px;font-weight:600;color:var(--red);white-space:nowrap">${esc(l.dist)}</span>`:''}
+          </div>`).join(''):`<p style="color:var(--muted);font-size:14px">Consulte o corretor para detalhes sobre a vizinhança.</p>`}
+        </div>
+      </div>
+    </section>
+
+    <section data-reveal style="margin-top:56px">
+      <h2 style="font-size:clamp(24px,3vw,34px);font-weight:600;letter-spacing:-.02em;margin-bottom:20px">Vídeo do <span class="serif" style="color:var(--red)">empreendimento</span></h2>
+      ${videoBlock}
+    </section>
+
+    <section data-reveal style="margin-top:56px">
+      <div style="position:relative;border-radius:22px;overflow:hidden;min-height:360px;background:var(--ph1)">
+        <img src="${esc(emp.facilidades||PLACEHOLDER_IMG)}" alt="Lazer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 45%,rgba(0,0,0,.15) 100%)"></div>
+        <div style="position:relative;padding:38px 40px;max-width:560px;color:#fff">
+          <div style="font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Um olhar sobre o lazer</div>
+          <h2 style="font-size:clamp(24px,3vw,34px);font-weight:600;letter-spacing:-.02em;margin-bottom:14px;text-shadow:0 1px 8px rgba(0,0,0,.4)">Áreas comuns pensadas para o dia a dia</h2>
+          <p style="font-size:15px;line-height:1.6;opacity:.92;margin-bottom:20px;text-shadow:0 1px 6px rgba(0,0,0,.5)">Do térreo ao rooftop, as áreas comuns do ${esc(emp.nome)} foram pensadas para o convívio e o descanso — com ${esc(emp.difsChips.slice(0,3).join(', ').toLowerCase())} e mais, integrando lazer e rotina sem sair de casa.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${emp.difsChips.map(d=>`<span style="padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(6px);font-size:13px;font-weight:500;color:#fff">${esc(d)}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-reveal style="margin-top:56px;display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:center">
+      <div>
+        <h2 style="font-size:clamp(24px,3vw,34px);font-weight:600;letter-spacing:-.02em;margin-bottom:14px">Explore o <span class="serif" style="color:var(--red)">bairro</span></h2>
+        <p style="color:var(--text);font-size:16px;line-height:1.65;opacity:.88">${esc(emp.bairroTxt)}</p>
+      </div>
+      <div style="height:300px;border-radius:18px;overflow:hidden;background:var(--ph1)"><img src="${esc(emp.interna||PLACEHOLDER_IMG)}" alt="${esc(emp.bairro)}" style="width:100%;height:100%;object-fit:cover"></div>
+    </section>
+
+    <section data-reveal style="margin-top:56px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div style="border:1px solid var(--card-brd);border-radius:20px;background:var(--card);box-shadow:var(--shadow);padding:28px">
+        <div style="font-weight:600;font-size:18px;margin-bottom:6px">Book completo em PDF</div>
+        <p style="color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:20px">Plantas, tabela de preços, memorial descritivo e imagens em alta — tudo num arquivo para baixar e compartilhar.</p>
+        <button style="width:100%;height:50px;background:var(--red);color:#fff;border:none;border-radius:12px;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer" class="btn-red">⬇ Baixar book (PDF)</button>
+      </div>
+      <div style="border:1px solid var(--gold);border-radius:20px;background:var(--card);box-shadow:var(--shadow);padding:28px">
+        <div style="font-weight:600;font-size:18px;margin-bottom:6px">Evolução da obra</div>
+        ${!state.obraUnlocked?`
+        <p style="color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:18px">Fotos mês a mês do canteiro. Faça um cadastro rápido para liberar o acompanhamento.</p>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <input id="leadNome" placeholder="Seu nome" style="height:46px;padding:0 14px;border-radius:11px;border:1px solid var(--card-brd);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;outline:none">
+          <input id="leadContato" placeholder="WhatsApp ou e-mail" style="height:46px;padding:0 14px;border-radius:11px;border:1px solid var(--card-brd);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;outline:none">
+          <button data-act="unlockObra" style="height:48px;background:var(--gold);color:#111;border:none;border-radius:11px;font-family:inherit;font-weight:600;font-size:14.5px;cursor:pointer">Liberar evolução</button>
+        </div>`:`
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Acompanhamento liberado ✓</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          ${['Jan','Fev','Mar','Abr','Mai','Jun'].map(o=>`<div style="aspect-ratio:1;border-radius:10px;background:var(--surface);border:1px solid var(--card-brd);display:grid;place-items:center;color:var(--muted);font-size:11px">${o}</div>`).join('')}
+        </div>`}
+      </div>
+    </section>
+
+    <section id="simulacao" data-reveal style="margin-top:56px;border:1px solid var(--card-brd);border-radius:22px;background:var(--surface);padding:32px">
+      <h2 style="font-size:clamp(24px,3vw,34px);font-weight:600;letter-spacing:-.02em;margin-bottom:20px">Simulação de <span class="serif" style="color:var(--red)">financiamento</span></h2>
+      <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center">
+        <div style="display:flex;flex-direction:column;gap:22px">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px"><span style="color:var(--muted)">Entrada</span><span style="font-weight:600">${fmt(entrada)} (${state.sim.entradaPct}%)</span></div>
+            <input type="range" min="10" max="60" step="5" value="${state.sim.entradaPct}" data-act="simEntrada" style="width:100%">
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px"><span style="color:var(--muted)">Prazo</span><span style="font-weight:600">${state.sim.anos} anos</span></div>
+            <input type="range" min="10" max="35" step="1" value="${state.sim.anos}" data-act="simAnos" style="width:100%">
+          </div>
+          <div style="font-size:12.5px;color:var(--muted)">Simulação ilustrativa · taxa efetiva ~9,5% a.a. (SAC aprox.). Valores sujeitos a análise de crédito.</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--card-brd);border-radius:18px;padding:26px;text-align:center">
+          <div style="color:var(--muted);font-size:13px">Primeira parcela estimada</div>
+          <div style="font-size:38px;font-weight:600;letter-spacing:-.02em;margin:6px 0 14px">${fmt(parcela)}</div>
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:8px 0;border-top:1px solid var(--card-brd)"><span style="color:var(--muted)">Valor do imóvel</span><span style="font-weight:600">${fmt(t.preco)}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:8px 0;border-top:1px solid var(--card-brd)"><span style="color:var(--muted)">Financiado</span><span style="font-weight:600">${fmt(financiado)}</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section data-reveal style="margin-top:56px">
+      <h2 style="font-size:clamp(24px,3vw,34px);font-weight:600;letter-spacing:-.02em;margin-bottom:20px">Resumo do <span class="serif" style="color:var(--red)">empreendimento</span></h2>
+      <div style="border:1px solid var(--card-brd);border-radius:20px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)">
+        ${[['Incorporadora',emp.incorporadora],['Bairro',emp.bairro+(emp.bairroOficial&&emp.bairroOficial!==emp.bairro?' · '+emp.bairroOficial:'')],['Endereço',emp.endereco],['Entrega',emp.entrega],['Status',emp.status],['Unidades',emp.unidades||'—'],['MCMV',emp.mcmv],['A partir de',fmt(minT.preco)]]
+          .map(([k,v])=>`<div style="display:flex;justify-content:space-between;gap:16px;padding:15px 24px;border-top:1px solid var(--card-brd);font-size:15px"><span style="color:var(--muted)">${esc(k)}</span><span style="font-weight:600;text-align:right">${esc(v)}</span></div>`).join('')}
+      </div>
+    </section>
+
+    ${similares.length?`
+    <section data-reveal style="margin-top:56px">
+      <h2 style="font-size:clamp(24px,3vw,34px);font-weight:600;letter-spacing:-.02em;margin-bottom:6px">Você também pode <span class="serif" style="color:var(--red)">gostar</span></h2>
+      <p style="color:var(--muted);font-size:15px;margin-bottom:20px">Empreendimentos parecidos com este — mesmo bairro ou faixa de valor.</p>
+      <div style="display:flex;gap:16px;overflow-x:auto;padding:4px 4px 16px;scroll-snap-type:x mandatory">
+        ${similares.map(s=>`
+        <div data-act="openEmp" data-id="${s.id}" class="similar-card" style="flex:0 0 300px;scroll-snap-align:start;position:relative;height:360px;border-radius:18px;overflow:hidden;background:var(--ph1);cursor:pointer;box-shadow:0 14px 34px -14px rgba(17,17,17,.32);transition:transform .3s,box-shadow .3s">
+          <img src="${esc(s.fachada||PLACEHOLDER_IMG)}" alt="${esc(s.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 34%,rgba(0,0,0,.4) 58%,rgba(0,0,0,.88) 100%)"></div>
+          <span style="${statusBadge(s.status)}left:14px;top:14px">${esc(s.status)}</span>
+          <div style="position:absolute;left:0;right:0;bottom:0;padding:18px;color:#fff">
+            <div style="font-size:12px;opacity:.85;margin-bottom:3px;text-shadow:0 1px 4px rgba(0,0,0,.5)">${esc(s.bairro)}</div>
+            <h3 style="font-size:18px;font-weight:600;letter-spacing:-.01em;line-height:1.15;margin-bottom:8px;text-shadow:0 1px 6px rgba(0,0,0,.5)">${esc(s.nome)}</h3>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+              <span style="padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(6px);font-size:11.5px;font-weight:500;color:#fff">⌂ ${s.qmax===0?'Studio':(s.qmin===s.qmax?s.qmax:s.qmin+'–'+s.qmax)+'q'}</span>
+              <span style="padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(6px);font-size:11.5px;font-weight:500;color:#fff">▱ ${s.area} m²</span>
+            </div>
+            <div style="font-size:18px;font-weight:600;letter-spacing:-.01em;text-shadow:0 1px 6px rgba(0,0,0,.5)">${fmt(s.minPreco)}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </section>`:''}
+    </div>
+  `;
+
+  renderMap(emp);
+  if(!opts||!opts.keepScroll) setupReveal();
+  else setupReveal();
+}
+
+let io=null;
+function setupReveal(){
+  if(!io){
+    io=new IntersectionObserver(entries=>{
+      entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('reveal-in'); io.unobserve(en.target); } });
+    },{threshold:0.1, rootMargin:'0px 0px -6% 0px'});
+  }
+  document.querySelectorAll('[data-reveal]').forEach(el=>{
+    if(el.dataset.revealReady) return;
+    el.dataset.revealReady='1';
+    el.classList.add('reveal-init');
+    io.observe(el);
+  });
+}
+
+/* ---------------- BOOT ---------------- */
+(async function boot(){
+  const id=new URLSearchParams(window.location.search).get('id');
+  if(!id){
+    q('loadOverlay').textContent='Nenhum empreendimento indicado na URL.';
+    return;
+  }
+  try{
+    const[detail,catalog]=await Promise.all([loadDetail(id), loadCatalogLite()]);
+    if(!detail){
+      q('loadOverlay').textContent='Empreendimento não encontrado ou inativo.';
+      return;
+    }
+    EMP=detail; CATALOG=catalog;
+  }catch(err){
+    q('loadOverlay').textContent='Erro ao carregar o empreendimento. Verifique a conexão e recarregue a página.';
+    console.error(err);
+    return;
+  }
+  document.title=EMP.nome+' — Zona Leste Lançamentos';
+  renderPage();
+  q('loadOverlay').style.display='none';
+  q('root').style.display='block';
+  window.addEventListener('scroll', ()=>setupReveal(), {passive:true});
+})();
+</script>
+</body>
+</html>
