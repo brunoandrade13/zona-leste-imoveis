@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zona Leste Lançamentos — Todo lançamento da Zona Leste, num só lugar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'General Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  :root{
+    --bg:#FFFFFF;--text:#111111;--muted:#6B6F76;--red:#9E1B1B;--gold:#C9A227;
+    --glass:rgba(255,255,255,.20);--glass-brd:rgba(17,17,17,.05);
+    --card:#FFFFFF;--card-brd:rgba(17,17,17,.09);--surface:#F6F6F4;
+    --shadow:0 12px 40px rgba(17,17,17,.10);--ph1:#EDEBE6;--ph2:#E2DFD8;
+  }
+  [data-theme="dark"]{
+    --bg:#0B0D10;--text:#FFFFFF;--muted:#A8ACB3;
+    --glass:rgba(16,19,24,.18);--glass-brd:rgba(255,255,255,.08);
+    --card:#12151A;--card-brd:rgba(255,255,255,.10);--surface:#111418;
+    --shadow:0 16px 44px rgba(0,0,0,.55);--ph1:#1A1E24;--ph2:#22272E;
+  }
+  a{color:var(--red);text-decoration:none}
+  a:hover{color:var(--gold)}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .serif{font-family:'Newsreader',Georgia,serif;font-style:italic;font-weight:500}
+  .reveal-init{opacity:0;transform:translateY(34px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
+  .reveal-in{opacity:1 !important;transform:none !important}
+  .hoverop:hover{opacity:1 !important;background:var(--surface)}
+  .hoverlogin:hover{background:var(--gold) !important;color:#111 !important}
+  .hoverlogin:hover .arrow{transform:translateX(3px)}
+  .hovertheme:hover{filter:brightness(1.08)}
+  .socialbtn:hover{background:var(--red) !important;color:#fff !important;border-color:var(--red) !important}
+  .footlink:hover{color:var(--text) !important}
+  .simbtn:hover{filter:brightness(1.05)}
+  select{-webkit-appearance:none;appearance:none}
+  #loadOverlay{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;transition:opacity .4s}
+</style>
+</head>
+<body>
+
+<div id="loadOverlay">Carregando catálogo…</div>
+
+<div id="root" data-theme="light" style="min-height:100vh;background:var(--bg);color:var(--text);transition:background .3s,color .3s;overflow-x:hidden;display:none">
+
+  <header style="position:fixed;top:0;left:0;right:0;z-index:50;background:transparent">
+    <div style="height:88px;display:flex;align-items:center;justify-content:center;padding:0 20px">
+      <div style="display:flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:8px 8px 8px 16px;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.12)">
+        <button data-act="goHome" style="display:flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;color:inherit;font-family:inherit;padding-right:6px">
+          <span style="width:30px;height:30px;border-radius:8px;background:var(--red);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px">ZL</span>
+          <span style="font-weight:600;font-size:15.5px;letter-spacing:-.01em;white-space:nowrap">Zona Leste</span>
+        </button>
+        <nav style="display:flex;align-items:center;gap:2px">
+          <a href="#carrossel" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Empreendimentos</a>
+          <a href="#bairros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Bairros</a>
+          <a href="#numeros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Faça sua simulação</a>
+        </nav>
+        <button id="themeBtn" data-act="toggleTheme" title="Alternar tema" class="hovertheme" style="width:38px;height:38px;border-radius:999px;border:none;background:var(--surface);cursor:pointer;color:var(--text);display:grid;place-items:center;font-size:15px;flex-shrink:0">☾</button>
+        <button class="hoverlogin" style="position:relative;overflow:hidden;height:38px;padding:0 18px;border-radius:999px;border:none;background:var(--red);cursor:pointer;color:#fff;font-family:inherit;font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;white-space:nowrap">
+          <span>Entrar</span>
+          <span class="arrow" style="transition:transform .25s">→</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== HOME ===================== -->
+  <main id="homeScreen" style="display:block">
+    <!-- HERO -->
+    <section id="hero" style="position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden">
+      <video id="heroVideo" src="assets/hero-video.mp4" autoplay loop playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0"></video>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.2) 40%,rgba(0,0,0,.62));z-index:1"></div>
+
+      <div style="position:relative;z-index:3;text-align:center;padding:0 24px;max-width:900px;margin-top:40px">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(10px);color:#fff;font-size:13px;font-weight:500;margin-bottom:26px">
+          <span style="color:var(--gold)">●</span> <span id="heroCount">—</span> empreendimentos ativos na Zona Leste
+        </div>
+        <h1 style="color:#fff;font-size:clamp(40px,6vw,74px);line-height:1.02;font-weight:600;letter-spacing:-.02em;text-wrap:balance">
+          Todo lançamento da Zona Leste,<br><span class="serif" style="color:var(--gold)">num só</span> lugar.
+        </h1>
+        <p style="color:rgba(255,255,255,.78);font-size:clamp(16px,2vw,19px);margin-top:20px;max-width:600px;margin-left:auto;margin-right:auto;font-weight:400">
+          Fachadas, lazer, plantas e preços atualizados. Busque por bairro, quartos e valor — compare em segundos.
+        </p>
+
+        <!-- BUSCA -->
+        <div style="margin-top:34px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:840px;margin-left:auto;margin-right:auto">
+          <label style="flex:1;min-width:170px;text-align:left;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:14px;padding:9px 14px">
+            <div style="color:rgba(255,255,255,.55);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Bairro</div>
+            <select id="fBairro" data-search="bairro" style="width:100%;background:transparent;border:none;color:#fff;font-family:inherit;font-size:15px;font-weight:500;outline:none;cursor:pointer">
+              <option value="" style="color:#111">Todos os bairros</option>
+            </select>
+          </label>
+          <label style="flex:1;min-width:140px;text-align:left;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:14px;padding:9px 14px">
+            <div style="color:rgba(255,255,255,.55);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Quartos</div>
+            <select id="fQuartos" data-search="quartos" style="width:100%;background:transparent;border:none;color:#fff;font-family:inherit;font-size:15px;font-weight:500;outline:none;cursor:pointer">
+              <option value="" style="color:#111">Qualquer</option>
+              <option value="1" style="color:#111">1 quarto</option>
+              <option value="2" style="color:#111">2 quartos</option>
+              <option value="3" style="color:#111">3+ quartos</option>
+            </select>
+          </label>
+          <label style="flex:1;min-width:160px;text-align:left;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:14px;padding:9px 14px">
+            <div style="color:rgba(255,255,255,.55);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Faixa de valor</div>
+            <select id="fFaixa" data-search="faixa" style="width:100%;background:transparent;border:none;color:#fff;font-family:inherit;font-size:15px;font-weight:500;outline:none;cursor:pointer">
+              <option value="" style="color:#111">Qualquer valor</option>
+              <option value="a" style="color:#111">até R$ 500 mil</option>
+              <option value="b" style="color:#111">R$ 500–800 mil</option>
+              <option value="c" style="color:#111">R$ 800 mil–1,2 mi</option>
+              <option value="d" style="color:#111">acima de R$ 1,2 mi</option>
+            </select>
+          </label>
+          <a href="#carrossel" style="display:flex;align-items:center;gap:8px;padding:0 26px;background:var(--red);color:#fff;border-radius:13px;font-weight:600;font-size:15px;min-height:56px">
+            Buscar <span style="opacity:.8">(<span id="resultCountA">—</span>)</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- LOOP DE LOGOS -->
+      <div style="position:relative;z-index:3;width:100%;margin-top:auto;padding:26px 0 30px">
+        <div style="text-align:center;color:rgba(255,255,255,.5);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px">Incorporadoras parceiras</div>
+        <div style="overflow:hidden;max-width:840px;margin:0 auto;-webkit-mask-image:linear-gradient(90deg,transparent,#000 24%,#000 76%,transparent);mask-image:linear-gradient(90deg,transparent,#000 24%,#000 76%,transparent)">
+          <div id="logosLoop" style="display:flex;gap:14px;width:max-content;animation:marquee 32s linear infinite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CARROSSEL DE ASSINATURA -->
+    <section id="carrossel" style="padding:70px 0 100px;background:var(--surface);border-top:1px solid var(--card-brd);margin-top:20px">
+      <div style="max-width:1280px;margin:0 auto;padding:0 24px;text-align:center" data-reveal>
+        <div style="color:var(--red);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px"><span id="resultCountB">—</span> resultados</div>
+        <h2 style="font-size:clamp(28px,4vw,44px);font-weight:600;letter-spacing:-.02em">Explore os <span class="serif" style="color:var(--red)">lançamentos</span></h2>
+      </div>
+      <div id="carrosselBody"></div>
+    </section>
+
+    <!-- CARDS DE BAIRRO -->
+    <section id="bairros" style="max-width:1280px;margin:0 auto;padding:96px 24px 40px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:34px;flex-wrap:wrap" data-reveal>
+        <div>
+          <div style="color:var(--red);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Onde procurar</div>
+          <h2 style="font-size:clamp(28px,4vw,42px);font-weight:600;letter-spacing:-.02em">Bairros da <span class="serif" style="color:var(--red)">Zona Leste</span></h2>
+        </div>
+        <p style="color:var(--muted);max-width:340px;font-size:15px">Contexto de mobilidade e vizinhança para orientar a busca antes de abrir os empreendimentos.</p>
+      </div>
+      <div id="bairrosCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px"></div>
+    </section>
+
+    <!-- ZONA LESTE EM NÚMEROS -->
+    <section id="numeros" style="max-width:1280px;margin:0 auto;padding:56px 24px">
+      <div id="statsGrid" style="border:1px solid var(--card-brd);border-radius:24px;background:var(--surface);padding:44px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:20px;text-align:center" data-reveal></div>
+    </section>
+
+    <!-- MAPA -->
+    <section id="mapa" style="max-width:1280px;margin:0 auto;padding:40px 24px 20px">
+      <div style="margin-bottom:24px" data-reveal>
+        <div style="color:var(--red);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Panorama</div>
+        <h2 style="font-size:clamp(28px,4vw,42px);font-weight:600;letter-spacing:-.02em">Mapa geral dos <span class="serif" style="color:var(--red)">lançamentos</span></h2>
+      </div>
+      <div id="mapEl" data-reveal style="height:460px;border:1px solid var(--card-brd);border-radius:22px;overflow:hidden;background:var(--surface);position:relative;z-index:0"></div>
+      <p style="color:var(--muted);font-size:13px;margin-top:12px">Zona Leste de São Paulo · clique num marcador para abrir o empreendimento.</p>
+    </section>
+
+    <!-- COMPARATIVO -->
+    <section id="comparativo" style="max-width:1280px;margin:0 auto;padding:56px 24px">
+      <div style="margin-bottom:24px" data-reveal>
+        <div style="color:var(--red);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Decida com dados</div>
+        <h2 style="font-size:clamp(28px,4vw,42px);font-weight:600;letter-spacing:-.02em">Comparativo <span class="serif" style="color:var(--red)">bairro a bairro</span></h2>
+      </div>
+      <div data-reveal style="border:1px solid var(--card-brd);border-radius:20px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)">
+        <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr .9fr;gap:0;background:var(--surface);padding:14px 20px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600">
+          <span>Bairro</span><span>Preço médio /m²</span><span>Empreend.</span><span>Ticket médio</span><span>Mobilidade</span>
+        </div>
+        <div id="compareRows"></div>
+      </div>
+    </section>
+
+    <!-- PROVA SOCIAL -->
+    <section id="prova" style="padding:74px 0 94px;background:var(--surface);border-top:1px solid var(--card-brd)">
+      <div style="max-width:1280px;margin:0 auto;padding:0 24px;text-align:center" data-reveal>
+        <h2 style="font-size:clamp(28px,4vw,44px);font-weight:600;letter-spacing:-.02em">Quem comprou pelo <span class="serif" style="color:var(--red)">catálogo</span></h2>
+        <div style="display:inline-flex;margin-top:12px;padding:5px 14px;border-radius:999px;background:var(--card);border:1px solid var(--card-brd);color:var(--muted);font-size:12.5px;font-weight:600">Exemplos ilustrativos — ainda não são depoimentos reais de clientes</div>
+      </div>
+      <div id="stage2" style="position:relative;height:340px;margin-top:28px;perspective:1500px;cursor:grab;touch-action:pan-y;user-select:none">
+        <div id="track2" style="position:absolute;inset:0;transform-style:preserve-3d"></div>
+      </div>
+    </section>
+
+    <footer style="border-top:1px solid var(--card-brd);background:var(--surface)">
+      <div style="max-width:1280px;margin:0 auto;padding:56px 24px 26px;display:grid;grid-template-columns:1.5fr 1fr 1fr 1.3fr;gap:40px 32px">
+
+        <div data-reveal>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <span style="width:34px;height:34px;border-radius:9px;background:var(--red);display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px">ZL</span>
+            <span style="font-weight:600;font-size:17px;letter-spacing:-.01em">Zona Leste Lançamentos</span>
+          </div>
+          <p style="color:var(--muted);font-size:14px;line-height:1.55;max-width:320px;margin-bottom:18px">Catálogo independente de lançamentos da Zona Leste de São Paulo. Fotos, plantas e preços reunidos num só lugar, com atendimento direto do corretor responsável.</p>
+          <div style="display:flex;gap:10px;margin-bottom:22px">
+            <a href="#" aria-label="Instagram" class="socialbtn" style="width:38px;height:38px;border-radius:999px;border:1px solid var(--card-brd);display:grid;place-items:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4.5"></circle><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"></circle></svg></a>
+            <a href="#" aria-label="WhatsApp" class="socialbtn" style="width:38px;height:38px;border-radius:999px;border:1px solid var(--card-brd);display:grid;place-items:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 12a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.2-4.2A8.5 8.5 0 1 1 20.5 12Z"></path><path d="M9 8.5c.3 3 2.5 5.2 5.5 5.5l1.2-1.4-1.9-.9-.9.9c-1-.5-1.9-1.4-2.4-2.4l.9-.9-.9-1.9L9 8.5Z" fill="currentColor" stroke="none"></path></svg></a>
+            <a href="#" aria-label="YouTube" class="socialbtn" style="width:38px;height:38px;border-radius:999px;border:1px solid var(--card-brd);display:grid;place-items:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="5.5" width="19" height="13" rx="4"></rect><path d="M10.5 9.2l4.2 2.8-4.2 2.8V9.2Z" fill="currentColor" stroke="none"></path></svg></a>
+            <a href="#" aria-label="LinkedIn" class="socialbtn" style="width:38px;height:38px;border-radius:999px;border:1px solid var(--card-brd);display:grid;place-items:center;color:var(--text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6.5 8.5v9H4v-9h2.5ZM5.25 4.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM20 17.5h-2.5v-4.7c0-1.2-.5-1.9-1.5-1.9s-1.6.7-1.6 1.9v4.7H12v-9h2.4v1.1c.4-.7 1.3-1.3 2.5-1.3 1.8 0 3.1 1.1 3.1 3.6v5.6Z"></path></svg></a>
+          </div>
+          <div style="font-weight:600;font-size:13.5px;margin-bottom:8px">Receba os novos lançamentos em primeira mão</div>
+          <form id="newsletterForm" style="display:flex;gap:8px;max-width:340px">
+            <input type="email" placeholder="seu@email.com" style="flex:1;height:44px;padding:0 14px;border-radius:11px;border:1px solid var(--card-brd);background:var(--card);color:var(--text);font-family:inherit;font-size:14px;outline:none">
+            <button type="submit" style="height:44px;padding:0 18px;border-radius:11px;border:none;background:var(--red);color:#fff;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer">Assinar</button>
+          </form>
+        </div>
+
+        <div data-reveal>
+          <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px">Navegação</div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <a href="#carrossel" class="footlink" style="color:var(--muted);font-size:14.5px">Empreendimentos</a>
+            <a href="#bairros" class="footlink" style="color:var(--muted);font-size:14.5px">Bairros</a>
+            <a href="#" class="footlink" style="color:var(--muted);font-size:14.5px">Sobre</a>
+            <a href="#" class="footlink" style="color:var(--muted);font-size:14.5px">Contato</a>
+            <a href="#" class="footlink" style="color:var(--muted);font-size:14.5px">Faça sua simulação</a>
+            <a href="#" class="footlink" style="color:var(--muted);font-size:14.5px">Mapa do site</a>
+          </div>
+        </div>
+
+        <div data-reveal>
+          <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px">Bairros da Zona Leste</div>
+          <div id="footerBairros" style="display:flex;flex-direction:column;gap:11px"></div>
+        </div>
+
+        <div data-reveal>
+          <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px">Corretor responsável</div>
+          <div style="font-weight:600;font-size:15px;margin-bottom:2px">Bruno [sobrenome]</div>
+          <div style="color:var(--muted);font-size:13.5px;margin-bottom:16px">CRECI-SP [nº a preencher]</div>
+          <div style="display:flex;flex-direction:column;gap:9px;color:var(--muted);font-size:14px">
+            <a href="#" class="footlink" style="color:var(--text);font-weight:500">WhatsApp: (11) 9&nbsp;····-····</a>
+            <a href="#" class="footlink" style="color:var(--muted)">contato@zonalestelancamentos.com</a>
+            <span>Atendimento: seg a sáb, 9h–19h</span>
+          </div>
+          <a href="#carrossel" class="simbtn" style="display:inline-flex;align-items:center;gap:7px;margin-top:18px;height:44px;padding:0 18px;border-radius:11px;background:var(--gold);color:#111;font-weight:600;font-size:14px">Simular financiamento →</a>
+        </div>
+      </div>
+
+      <div style="max-width:1280px;margin:0 auto;padding:0 24px">
+        <p style="color:var(--muted);font-size:12px;line-height:1.5;border-top:1px solid var(--card-brd);padding-top:20px;margin-bottom:14px">Imagens meramente ilustrativas, sujeitas a alteração pela incorporadora responsável por cada empreendimento. Os dados de preços e prazos podem variar — confirme sempre com o corretor antes de decidir.</p>
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:34px;color:var(--muted);font-size:13px">
+          <span>© <span id="yearNow"></span> — Zona Leste Lançamentos. Todos os direitos reservados.</span>
+          <div style="display:flex;gap:18px;flex-wrap:wrap">
+            <a href="#" class="footlink" style="color:var(--muted)">Política de Privacidade</a>
+            <a href="#" class="footlink" style="color:var(--muted)">Termos de Uso</a>
+            <a href="#" class="footlink" style="color:var(--muted)">Configurar cookies</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ===================== PÁGINA DO EMPREENDIMENTO ===================== -->
+  <main id="empScreen" style="display:none;max-width:1180px;margin:0 auto;padding:88px 24px 80px"></main>
+
+</div>
+
+<script>
+"use strict";
+const SB='https://xmnggeptpwxsmcartyzt.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtbmdnZXB0cHd4c21jYXJ0eXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NjkzMzIsImV4cCI6MjA5NzE0NTMzMn0.2HWGvTAuEuzEHXcEbOr9t0gC1yc765lxQxk080EDmfg';
+const H={apikey:KEY,Authorization:`Bearer ${KEY}`};
+
+const STATUS_LABELS={lancamento:'Lançamento',na_planta:'Na planta',pronto:'Pronto p/ morar',breve_lancamento:'Breve lançamento',em_construcao:'Em construção'};
+const LOGOS=[
+  {n:'Cyrela',f:'Cyrela_Brazil_Realty_logo.png'},{n:'MRV',f:'MRV_Engenharia_logo.png'},{n:'Cury',f:'Cury_Construtora_logo.png'},
+  {n:'Metrocasa',f:'Metrocasa_logo.png'},{n:'Econ',f:'Econ_Construtora_logo.png'},{n:'Xavier Engenharia',f:'Xavier_Engenharia_logo.png'},
+  {n:'Diálogo Engenharia',f:'Dialogo_Engenharia_logo.png'},{n:'Plano&Plano',f:'PlanoPlano_logo.png'},{n:'Graal Engenharia',f:'Graal_Engenharia_logo.png'},{n:'Eztec',f:'Eztec_logo.png'}
+];
+const TESTIMONIALS=[
+  { name:'Marina Alves', role:'Compradora · Tatuapé', quote:'Comparei plantas e preços em minutos e fechei o apê sem sair de casa. Muito mais prático que visitar estande por estande.' },
+  { name:'Rafael Souza', role:'Comprador · Itaquera', quote:'As fotos e a metragem batiam com a realidade. Processo transparente do começo ao fim.' },
+  { name:'Camila Nogueira', role:'Compradora · Penha', quote:'O simulador me deu segurança pra decidir. Foi a melhor experiência de compra que já tive.' },
+  { name:'Diego Martins', role:'Comprador · Cangaíba', quote:'Consegui um studio dentro do meu orçamento. O atendimento foi rápido e direto.' },
+  { name:'Beatriz Lima', role:'Compradora · Tatuapé', quote:'Ver a evolução da obra e o book completo em PDF fez toda a diferença na escolha.' },
+  { name:'Thiago Ferreira', role:'Comprador · Patriarca', quote:'Filtrei por bairro e valor e achei exatamente o que eu procurava. Recomendo demais.' },
+  { name:'Juliana Castro', role:'Compradora · Penha', quote:'O comparativo entre bairros me ajudou muito. Comprei com total confiança.' },
+  { name:'André Ribeiro', role:'Comprador · Itaquera', quote:'Tudo reunido num site só. Economizei tempo e ainda achei condições melhores.' },
+];
+const T_COLORS=['#9E1B1B','#3B5B8C','#4C7A5B','#C9A227','#7A4C6B','#2F6D6A','#8C5A2B','#5B5B8C'];
+
+let EMPS=[];
+const state={ theme:'light', screen:'home', currentId:null, sel:{}, tip2:{}, zoom:null, search:{bairro:'',quartos:'',faixa:''} };
+
+const q=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>'R$ '+Math.round(n).toLocaleString('pt-BR');
+const fmtK=n=>n>=1000000?'R$ '+(n/1000000).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi':'R$ '+Math.round(n/1000)+' mil';
+const PLACEHOLDER_IMG='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="%23EDEBE6"/></svg>');
+
+async function sbFetch(path,params={}){
+  const u=new URL(`${SB}/rest/v1/${path}`);
+  for(const[k,v]of Object.entries(params))u.searchParams.set(k,v);
+  const r=await fetch(u,{headers:{...H,'Range':'0-9999'}});
+  return r.json();
+}
+
+async function loadAll(){
+  const[emps,tips]=await Promise.all([
+    sbFetch('empreendimentos',{select:'*',ativo:'eq.true',limit:'500',order:'nome.asc'}),
+    sbFetch('empreendimento_tipologias',{select:'empreendimento_id,quartos,vagas,area_m2,preco_a_partir,ordem',ativo:'eq.true',order:'empreendimento_id,area_m2.asc',limit:'3000'}),
+  ]);
+  let imgs=[],off=0;
+  while(true){
+    const batch=await sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,tipo,ordem,is_capa',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'1000',offset:String(off)});
+    imgs=imgs.concat(batch);
+    if(batch.length<1000)break;
+    off+=1000;
+  }
+  return processEmps(emps,tips,imgs);
+}
+
+function pickImg(list,tipo){ const arr=list.filter(i=>i.tipo===tipo); return arr.length?arr[0].url:null; }
+function pickImgNth(list,tipo,n){ const arr=list.filter(i=>i.tipo===tipo); return arr.length>n?arr[n].url:null; }
+
+function youtubeEmbed(url){
+  if(!url) return null;
+  try{
+    const u = new URL(url);
+    if(!/youtube\.com|youtu\.be/.test(u.hostname)) return null;
+    let id = null;
+    if(u.hostname.includes('youtu.be')) id = u.pathname.slice(1);
+    else if(u.pathname==='/watch') id = u.searchParams.get('v');
+    else if(u.pathname.startsWith('/embed/')) id = u.pathname.split('/embed/')[1];
+    if(!id) return null; // e.g. /results?search_query=... has no real video id
+    return `https://www.youtube.com/embed/${id}`;
+  }catch(_){ return null; }
+}
+
+function mobSentence(e){
+  const bits=[];
+  if(e.nome_metro_proximo) bits.push(`${e.nome_metro_proximo}${e.dist_metro_metros?` (${e.dist_metro_metros}m)`:''}`);
+  if(e.nome_shopping_proximo) bits.push(e.nome_shopping_proximo);
+  if(!bits.length) return `${e.bairro_comercial||e.bairro} é um dos bairros com oferta ativa de lançamentos na Zona Leste.`;
+  return `Próximo de ${bits.join(' e ')}.`;
+}
+
+function processEmps(emps,tipsRaw,imgsRaw){
+  const tipsBy={}, imgsBy={};
+  tipsRaw.forEach(t=>{ (tipsBy[t.empreendimento_id]=tipsBy[t.empreendimento_id]||[]).push(t); });
+  imgsRaw.forEach(i=>{ (imgsBy[i.empreendimento_id]=imgsBy[i.empreendimento_id]||[]).push(i); });
+
+  return emps.map(e=>{
+    const imgs=imgsBy[e.id]||[];
+    const fachada=pickImg(imgs,'fachada')||pickImg(imgs,'perspectiva_3d')||null;
+    const interna=pickImg(imgs,'interiores')||pickImg(imgs,'perspectiva_3d')||pickImgNth(imgs,'lazer',1)||fachada;
+    const facilidades=pickImg(imgs,'lazer')||fachada;
+
+    let tips=(tipsBy[e.id]||[]).map(t=>({area:+t.area_m2||0,quartos:t.quartos??0,vagas:t.vagas??0,preco:+t.preco_a_partir||0})).filter(t=>t.preco>0);
+    if(!tips.length){
+      tips=[{area:+e.area_min_m2||0,quartos:e.tipo_min_quartos??0,vagas:0,preco:+e.preco_min||0}];
+    }
+
+    const difsRaw=(e.diferenciais_apto||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const difs=difsRaw.length?difsRaw.slice(0,4):['Consultar diferenciais com o corretor'];
+
+    return {
+      id:e.id, nome:e.nome, bairro:e.bairro_comercial||e.bairro||'Zona Leste', incorporadora:e.incorporadora||'—',
+      entrega:e.mes_entrega||'A definir', status:STATUS_LABELS[e.status]||e.status||'—',
+      urgent:false, priceChanged:false,
+      unidades:e.total_unidades||0, fase:e.fase_obra_pct??0,
+      mcmv: e.enquadrado_mcmv ? (e.faixa_mcmv?`Sim (${e.faixa_mcmv})`:'Sim') : 'Não',
+      lat: e.latitude!=null?parseFloat(e.latitude):null, lng: e.longitude!=null?parseFloat(e.longitude):null,
+      fachada, interna, facilidades,
+      difs,
+      bairroTxt: mobSentence(e),
+      urlVideo: youtubeEmbed(e.url_video_youtube),
+      tips: tips.sort((a,b)=>a.area-b.area),
+    };
+  });
+}
+
+function filtered(){
+  const {bairro,quartos,faixa}=state.search;
+  return EMPS.filter(e=>{
+    if(bairro && e.bairro!==bairro) return false;
+    if(quartos && !e.tips.some(t=> quartos==='3' ? t.quartos>=3 : t.quartos===+quartos)) return false;
+    if(faixa){
+      const min=Math.min(...e.tips.map(t=>t.preco));
+      if(faixa==='a' && min>=500000) return false;
+      if(faixa==='b' && (min<500000||min>=800000)) return false;
+      if(faixa==='c' && (min<800000||min>=1200000)) return false;
+      if(faixa==='d' && min<1200000) return false;
+    }
+    return true;
+  });
+}
+
+/* ---------------- CAROUSEL 1 (empreendimentos) ---------------- */
+let pos=0, vel=0, speedC=0.0012, pausedC=false, downC=false, movedC=false, startXC=0, lastXC=0;
+let trackEl=null, stageEl=null;
+
+function tipsPillsHtml(e, selIdx, eventCardIdx){
+  return e.tips.map((t,idx)=>{
+    const active = idx===selIdx;
+    return `<button data-act="selectTip" data-idx="${eventCardIdx}" data-tip="${idx}" style="font-family:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer;border:none;background:${active?'#fff':'rgba(255,255,255,.16)'};color:${active?'#111':'#fff'};backdrop-filter:blur(6px)">${t.area} m² · ${t.quartos===0?'Studio':t.quartos+' quartos'}</button>`;
+  }).join('');
+}
+
+function renderCarousel(){
+  const list=filtered();
+  q('resultCountA').textContent=list.length;
+  q('resultCountB').textContent=list.length;
+
+  const cardsHtml = list.map((e,i)=>{
+    const selIdx=state.sel[e.id]??0, t=e.tips[selIdx]||e.tips[0];
+    const img = e.fachada || PLACEHOLDER_IMG;
+    return `
+    <div data-act="cardClick" data-idx="${i}" data-dblact="openEmp" data-id="${e.id}" style="position:absolute;left:50%;top:50%;width:300px;will-change:transform,opacity;transform:translate(-50%,-50%)">
+      <div style="position:relative;height:440px;border-radius:22px;overflow:hidden;background:var(--ph1);box-shadow:var(--shadow)">
+        <img data-src="${esc(img)}" alt="${esc(e.nome)}" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;background:linear-gradient(135deg,var(--ph1),var(--ph2))">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 22%,transparent 40%,rgba(0,0,0,.92) 100%)"></div>
+        <div style="position:absolute;left:12px;top:12px;display:flex;gap:6px;flex-wrap:wrap">
+          <span style="padding:5px 11px;border-radius:999px;background:rgba(11,13,16,.55);color:#fff;font-size:12px;font-weight:600;backdrop-filter:blur(6px)">Entrega ${esc(e.entrega)}</span>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;padding:18px;color:#fff">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
+            <span style="font-size:12.5px;font-weight:500;opacity:.85">${esc(e.incorporadora)} · ${esc(e.bairro)}</span>
+            <span style="font-size:11px;font-weight:600;color:#fff;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(6px);white-space:nowrap">${esc(e.status)}</span>
+          </div>
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin-bottom:12px">${esc(e.nome)}</h3>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${tipsPillsHtml(e,selIdx,i)}</div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px">
+            <div>
+              <div style="opacity:.8;font-size:12px">A partir de · ${t.area} m²</div>
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:23px;font-weight:600;letter-spacing:-.01em">${fmt(t.preco)}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  let zoomHtml='';
+  if(state.zoom!=null && list[state.zoom]){
+    const e=list[state.zoom], selIdx=state.sel[e.id]??0, t=e.tips[selIdx]||e.tips[0];
+    const img=e.fachada||PLACEHOLDER_IMG;
+    zoomHtml=`
+    <div data-act="zoomClose" style="position:fixed;inset:0;z-index:9000;display:grid;place-items:center;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);padding:24px">
+      <div data-act="noop" data-dblact="openEmp" data-id="${e.id}" style="position:relative;width:420px;max-width:90vw;height:560px;max-height:82vh;border-radius:28px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.6);cursor:pointer;background:var(--ph1)">
+        <img src="${esc(img)}" alt="${esc(e.nome)}" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 24%,transparent 42%,rgba(0,0,0,.92) 100%)"></div>
+        <div style="position:absolute;left:20px;top:18px;display:flex;gap:8px;flex-wrap:wrap">
+          <span style="padding:7px 13px;border-radius:999px;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);color:#fff;font-size:12.5px;font-weight:600">Entrega ${esc(e.entrega)}</span>
+        </div>
+        <button data-act="zoomClose" style="position:absolute;right:16px;top:16px;width:36px;height:36px;border-radius:999px;border:none;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);color:#fff;cursor:pointer;font-size:15px">✕</button>
+        <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 24px 24px;color:#fff">
+          <div style="font-size:13px;opacity:.82;font-weight:500;margin-bottom:3px">${esc(e.incorporadora)} · ${esc(e.bairro)} · ${esc(e.status)}</div>
+          <h3 style="font-size:27px;font-weight:600;letter-spacing:-.01em;margin-bottom:15px">${esc(e.nome)}</h3>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px">${tipsPillsHtml(e,selIdx,state.zoom)}</div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+            <div>
+              <div style="font-size:12.5px;opacity:.78">A partir de · ${t.area} m²</div>
+              <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">${fmt(t.preco)}</div>
+            </div>
+            <button data-act="openEmp" data-id="${e.id}" style="height:48px;padding:0 22px;border-radius:999px;border:none;background:var(--red);color:#fff;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer;white-space:nowrap">Ver empreendimento →</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  q('carrosselBody').innerHTML = `
+    <div id="stage" data-reveal style="position:relative;height:560px;margin-top:30px;perspective:1600px;cursor:grab;touch-action:pan-y;user-select:none">
+      <div id="track" style="position:absolute;inset:0;transform-style:preserve-3d">${cardsHtml}</div>
+    </div>
+    ${zoomHtml}
+  `;
+  stageEl=q('stage'); trackEl=q('track');
+  bindCarouselDrag();
+  layoutCarousel();
+}
+
+function layoutCarousel(){
+  if(!trackEl) return;
+  const el=trackEl.children, n=el.length; if(!n) return;
+  const step=0.40, R=900, D=560;
+  for(let i=0;i<n;i++){
+    let rel=((i-pos)%n+n)%n; if(rel>n/2) rel-=n;
+    const card=el[i];
+    const s=card.style;
+    const ang=rel*step;
+    const x=Math.sin(ang)*R, z=-Math.cos(ang)*D, ry=-ang*50;
+    const op=1-Math.min(Math.max(Math.abs(rel)-2.3,0)/1.5,1);
+    s.transform=`translate(-50%,-50%) translate3d(${x}px,0,${z}px) rotateY(${ry}deg)`;
+    s.opacity=op; s.zIndex=Math.round(2000+z); s.pointerEvents=op>0.3?'auto':'none';
+    s.filter = state.zoom!=null ? 'brightness(.55)' : 'none';
+    // Lazy-load: only fetch the photo once this card is near the visible front,
+    // so opening the page with a large catalog doesn't fire hundreds of image
+    // requests at once (and trip Supabase Storage rate limits).
+    if(Math.abs(rel)<=4){
+      const img=card.querySelector('img[data-src]');
+      if(img){ img.src=img.dataset.src; img.removeAttribute('data-src'); }
+    }
+  }
+}
+
+function bindCarouselDrag(){
+  if(!stageEl) return;
+  stageEl.onmouseenter=()=>{ pausedC=true; };
+  stageEl.onmouseleave=()=>{ pausedC=false; };
+  stageEl.onpointerdown=e=>{ downC=true; movedC=false; startXC=e.clientX; lastXC=e.clientX; vel=0; stageEl.style.cursor='grabbing'; try{stageEl.setPointerCapture(e.pointerId);}catch(_){} };
+  stageEl.onpointermove=e=>{ if(!downC) return; const dx=e.clientX-lastXC; lastXC=e.clientX; if(Math.abs(e.clientX-startXC)>5){ movedC=true; if(state.zoom!=null){ state.zoom=null; renderCarousel(); } } pos-=dx*0.005; vel=-dx*0.005; };
+  stageEl.onpointerup=()=>{ downC=false; stageEl.style.cursor='grab'; };
+}
+
+/* ---------------- ACTIONS ---------------- */
+const ACTIONS={
+  goHome(){ state.screen='home'; state.zoom=null; q('homeScreen').style.display='block'; q('empScreen').style.display='none'; window.scrollTo({top:0}); },
+  toggleTheme(){ state.theme = state.theme==='light'?'dark':'light'; q('root').dataset.theme=state.theme; q('themeBtn').textContent = state.theme==='light'?'☾':'☀'; },
+  cardClick(t){ if(movedC) return; const idx=+t.dataset.idx; const nz = state.zoom===idx?null:idx; if(nz!=null) pos=idx; state.zoom=nz; renderCarousel(); },
+  zoomClose(){ state.zoom=null; renderCarousel(); },
+  openEmp(t){ const id=t.dataset.id; state.screen='emp'; state.currentId=id; state.zoom=null; renderEmpScreen(); q('homeScreen').style.display='none'; q('empScreen').style.display='block'; window.scrollTo({top:0}); },
+  selectTip(t){ const eid = filtered()[+t.dataset.idx]?.id; if(!eid) return; state.sel[eid]=+t.dataset.tip; renderCarousel(); },
+  selectTip2(t){ state.tip2[state.currentId]=+t.dataset.tip; renderEmpScreen(); },
+  noop(){},
+};
+
+document.addEventListener('click', e=>{
+  const t=e.target.closest('[data-act]');
+  if(!t) return;
+  ACTIONS[t.dataset.act]?.(t,e);
+});
+document.addEventListener('dblclick', e=>{
+  const t=e.target.closest('[data-dblact]');
+  if(!t) return;
+  ACTIONS[t.dataset.dblact]?.(t,e);
+});
+document.addEventListener('change', e=>{
+  const sel=e.target.closest('select[data-search]');
+  if(!sel) return;
+  state.search[sel.dataset.search]=sel.value;
+  state.zoom=null;
+  renderCarousel();
+});
+q('newsletterForm').addEventListener('submit', e=>e.preventDefault());
+
+/* ---------------- CAROUSEL 2 (depoimentos) ---------------- */
+let pos2=0, vel2=0, speed2=0.0015, paused2=false, down2=false, lastX2=0;
+let track2El=null, stage2El=null;
+
+function renderTestimonials(){
+  track2El=q('track2'); stage2El=q('stage2');
+  track2El.innerHTML = TESTIMONIALS.map((t,i)=>{
+    const initials=t.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+    const avStyle='width:46px;height:46px;border-radius:999px;flex-shrink:0;display:grid;place-items:center;font-weight:600;font-size:16px;color:#fff;background:'+T_COLORS[i%T_COLORS.length];
+    return `<div style="position:absolute;left:50%;top:50%;width:370px;will-change:transform,opacity;transform:translate(-50%,-50%)">
+      <div style="background:var(--card);border:1px solid var(--card-brd);border-radius:22px;box-shadow:var(--shadow);padding:28px 28px 24px;text-align:left">
+        <div style="display:flex;gap:2px;color:var(--gold);font-size:15px;margin-bottom:14px;letter-spacing:2px">★★★★★</div>
+        <p style="font-size:15.5px;line-height:1.55;color:var(--text);margin-bottom:22px;text-wrap:pretty;min-height:72px">"${esc(t.quote)}"</p>
+        <div style="display:flex;align-items:center;gap:12px;padding-top:16px;border-top:1px solid var(--card-brd)">
+          <span style="${avStyle}">${esc(initials)}</span>
+          <div><div style="font-weight:600;font-size:14.5px">${esc(t.name)}</div><div style="color:var(--muted);font-size:12.5px">${esc(t.role)}</div></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  stage2El.onmouseenter=()=>{paused2=true;};
+  stage2El.onmouseleave=()=>{paused2=false;};
+  stage2El.onpointerdown=e=>{down2=true;lastX2=e.clientX;vel2=0;stage2El.style.cursor='grabbing';try{stage2El.setPointerCapture(e.pointerId);}catch(_){}};
+  stage2El.onpointermove=e=>{if(!down2)return;const dx=e.clientX-lastX2;lastX2=e.clientX;pos2-=dx*0.005;vel2=-dx*0.005;};
+  stage2El.onpointerup=()=>{down2=false;stage2El.style.cursor='grab';};
+}
+function layoutTestimonials(){
+  if(!track2El) return;
+  const el=track2El.children, n=el.length; if(!n) return;
+  const step=0.42, R=840, D=440;
+  for(let i=0;i<n;i++){
+    let rel=((i-pos2)%n+n)%n; if(rel>n/2) rel-=n;
+    const ang=rel*step;
+    const x=Math.sin(ang)*R, z=-Math.cos(ang)*D, ry=-ang*46;
+    const op=1-Math.min(Math.max(Math.abs(rel)-2.2,0)/1.4,1);
+    const s=el[i].style;
+    s.transform=`translate(-50%,-50%) translate3d(${x}px,0,${z}px) rotateY(${ry}deg)`;
+    s.opacity=op; s.zIndex=Math.round(2000+z); s.pointerEvents=op>0.3?'auto':'none';
+  }
+}
+
+/* ---------------- STATIC SECTIONS (rendered once) ---------------- */
+function renderLogos(){
+  const loop=[...LOGOS,...LOGOS];
+  q('logosLoop').innerHTML = loop.map(l=>`<span style="display:inline-flex;align-items:center;justify-content:center;height:60px;padding:0 30px;flex-shrink:0;background:transparent"><img src="assets/logos/${l.f}" alt="${esc(l.n)}" style="height:34px;width:auto;max-width:170px;object-fit:contain;display:block;filter:drop-shadow(0 1px 3px rgba(0,0,0,.35))"></span>`).join('');
+}
+
+function bairroCounts(){
+  const m={};
+  EMPS.forEach(e=>{ m[e.bairro]=(m[e.bairro]||0)+1; });
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+
+function renderBairroCards(){
+  const top=bairroCounts().slice(0,5);
+  q('bairrosCardsGrid').innerHTML = top.map(([nome,qtd])=>{
+    const sample = EMPS.find(e=>e.bairro===nome);
+    const mob = sample && sample.bairroTxt.startsWith('Próximo de') ? sample.bairroTxt.replace('Próximo de ','').split(' (')[0] : '';
+    return `<div data-reveal style="border:1px solid var(--card-brd);border-radius:18px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)">
+      <div style="height:130px;background:linear-gradient(135deg,var(--ph1),var(--ph2));position:relative">
+        <span style="position:absolute;left:14px;top:12px;font-size:11px;color:var(--muted)">foto do bairro</span>
+        <span style="position:absolute;left:14px;bottom:12px;font-weight:600;font-size:19px">${esc(nome)}</span>
+        <span style="position:absolute;right:14px;bottom:12px;padding:4px 10px;border-radius:999px;background:var(--red);color:#fff;font-size:12px;font-weight:600">${qtd} unid.</span>
+      </div>
+      <div style="padding:14px 16px 16px">
+        <div style="display:flex;align-items:center;gap:7px;color:var(--gold);font-size:13px;font-weight:600;margin-bottom:6px">◆ ${esc(mob||'Zona Leste')}</div>
+        <p style="color:var(--muted);font-size:14px;line-height:1.45">${esc(sample?sample.bairroTxt:'')}</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStats(){
+  const bairros=bairroCounts();
+  const allTips=EMPS.flatMap(e=>e.tips).filter(t=>t.preco>0);
+  const minAll = allTips.length?Math.min(...allTips.map(t=>t.preco)):0;
+  const totalUnidades = EMPS.reduce((a,e)=>a+(e.unidades||0),0);
+  const incs = new Set(EMPS.map(e=>e.incorporadora)).size;
+  const stats=[
+    {v:EMPS.length,l:'empreendimentos no catálogo'},
+    {v:bairros.length,l:'bairros cobertos'},
+    {v:fmtK(minAll)+'+',l:'ticket de entrada'},
+    {v:totalUnidades.toLocaleString('pt-BR'),l:'unidades no total'},
+    {v:incs,l:'incorporadoras'},
+  ];
+  q('statsGrid').innerHTML = stats.map(s=>`<div><div class="serif" style="font-size:clamp(34px,5vw,52px);color:var(--red);line-height:1">${s.v}</div><div style="color:var(--muted);font-size:13.5px;margin-top:8px;font-weight:500">${s.l}</div></div>`).join('');
+}
+
+function renderCompare(){
+  const bairros=bairroCounts().map(([n])=>n);
+  const rows = bairros.map(b=>{
+    const es=EMPS.filter(e=>e.bairro===b);
+    const allT=es.flatMap(e=>e.tips).filter(t=>t.preco>0 && t.area>0);
+    if(!allT.length) return null;
+    const m2 = allT.reduce((a,t)=>a+t.preco/t.area,0)/allT.length;
+    const ticket = allT.reduce((a,t)=>a+t.preco,0)/allT.length;
+    const sample=es.find(e=>e.bairroTxt.startsWith('Próximo de'));
+    const mob = sample ? sample.bairroTxt.replace('Próximo de ','').split(' (')[0].split(' ')[0] : '—';
+    return {bairro:b, m2:fmt(m2), qtd:es.length, ticket:fmtK(ticket), mob};
+  }).filter(Boolean);
+  q('compareRows').innerHTML = rows.map(c=>`
+    <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr .9fr;gap:0;padding:15px 20px;border-top:1px solid var(--card-brd);align-items:center;font-size:14.5px">
+      <span style="font-weight:600">${esc(c.bairro)}</span>
+      <span style="color:var(--muted)">${c.m2}</span>
+      <span style="color:var(--muted)">${c.qtd}</span>
+      <span style="color:var(--muted)">${c.ticket}</span>
+      <span><span style="padding:3px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--card-brd);font-size:12.5px;font-weight:600;color:var(--gold)">${esc(c.mob)}</span></span>
+    </div>`).join('');
+}
+
+function renderFooterBairros(){
+  const top=bairroCounts().slice(0,8);
+  q('footerBairros').innerHTML = top.map(([n,c])=>`<a href="#bairros" class="footlink" style="color:var(--muted);font-size:14.5px;display:flex;justify-content:space-between;gap:10px;max-width:190px"><span>${esc(n)}</span><span style="opacity:.6;font-size:12.5px">${c}</span></a>`).join('');
+  q('yearNow').textContent = new Date().getFullYear();
+}
+
+let leafletMap=null;
+function renderMap(){
+  const el=q('mapEl');
+  if(!window.L){ setTimeout(renderMap,150); return; }
+  const L=window.L;
+  if(leafletMap){ try{leafletMap.remove();}catch(_){} }
+  leafletMap=L.map(el,{scrollWheelZoom:false}).setView([-23.545,-46.53],12);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(leafletMap);
+  EMPS.forEach(e=>{
+    if(e.lat==null||e.lng==null||isNaN(e.lat)||isNaN(e.lng)) return;
+    const preco = e.tips.length? fmtK(Math.min(...e.tips.map(t=>t.preco))) : '—';
+    const icon=L.divIcon({className:'',iconSize:[0,0],html:'<div style="background:#9E1B1B;color:#fff;font:600 11px/1 sans-serif;padding:5px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:translate(-50%,-130%)">'+preco+'</div>'});
+    const m=L.marker([e.lat,e.lng],{icon}).addTo(leafletMap);
+    m.bindTooltip(e.nome,{direction:'top',offset:[0,-14]});
+    m.on('click',()=>{ state.screen='emp'; state.currentId=e.id; state.zoom=null; renderEmpScreen(); q('homeScreen').style.display='none'; q('empScreen').style.display='block'; window.scrollTo({top:0}); });
+  });
+  setTimeout(()=>{ try{leafletMap.invalidateSize();}catch(_){} },250);
+}
+
+/* ---------------- EMP SCREEN ---------------- */
+function renderEmpScreen(){
+  const cur = EMPS.find(e=>e.id===state.currentId) || EMPS[0];
+  if(!cur){ q('empScreen').innerHTML='<p>Empreendimento não encontrado.</p>'; return; }
+  const openIdx = state.tip2[cur.id] ?? 0;
+  const curSel = cur.tips[openIdx] || cur.tips[0];
+  const resumo=[
+    {k:'Bairro',v:cur.bairro},{k:'Incorporadora',v:cur.incorporadora},{k:'Entrega',v:cur.entrega},
+    {k:'Status',v:cur.status},{k:'Unidades',v:cur.unidades||'—'},{k:'MCMV',v:cur.mcmv},
+    {k:'A partir de',v: cur.tips.length? fmt(Math.min(...cur.tips.map(t=>t.preco))) : '—'},
+  ];
+  const videoBlock = cur.urlVideo
+    ? `<div style="border-radius:16px;overflow:hidden;border:1px solid var(--card-brd)"><iframe width="100%" height="300" src="${esc(cur.urlVideo)}" title="Vídeo" frameborder="0" allowfullscreen style="display:block"></iframe></div>`
+    : `<div style="height:300px;border-radius:16px;background:#000;display:grid;place-items:center;color:rgba(255,255,255,.6);font-size:14px;border:1px solid var(--card-brd)">▶ Vídeo do YouTube · adicionar quando disponível</div>`;
+
+  q('empScreen').innerHTML = `
+    <button data-act="goHome" style="background:none;border:none;color:var(--muted);cursor:pointer;font-family:inherit;font-size:14px;margin-bottom:18px;display:flex;align-items:center;gap:6px">← voltar ao catálogo</button>
+
+    <div style="position:relative;height:460px;border-radius:24px;overflow:hidden;background:var(--ph1);margin-bottom:14px">
+      <img src="${esc(cur.fachada||PLACEHOLDER_IMG)}" alt="${esc(cur.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.6))"></div>
+      <div style="position:absolute;left:26px;bottom:24px;color:#fff">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <span style="padding:5px 12px;border-radius:999px;background:var(--red);font-size:12.5px;font-weight:600">${esc(cur.status)}</span>
+          <span style="padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);font-size:12.5px;font-weight:600">Entrega ${esc(cur.entrega)}</span>
+        </div>
+        <h1 style="font-size:clamp(30px,5vw,50px);font-weight:600;letter-spacing:-.02em">${esc(cur.nome)}</h1>
+        <p style="opacity:.85;font-size:16px;margin-top:6px">${esc(cur.incorporadora)} · ${esc(cur.bairro)}, Zona Leste</p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:34px;margin-top:34px">
+      <div>
+        <h2 style="font-size:26px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px">Tamanhos & <span class="serif" style="color:var(--red)">plantas</span></h2>
+        <p style="color:var(--muted);font-size:14.5px;margin-bottom:18px">Selecione uma metragem — a planta, o preço e a simulação abrem aqui embaixo, sem sair da página.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+          ${cur.tips.map((t,idx)=>`<button data-act="selectTip2" data-tip="${idx}" style="text-align:left;font-family:inherit;padding:12px 16px;border-radius:13px;cursor:pointer;color:${idx===openIdx?'#fff':'var(--text)'};border:1px solid ${idx===openIdx?'var(--red)':'var(--card-brd)'};background:${idx===openIdx?'var(--red)':'var(--card)'}">
+            <span style="font-weight:600;font-size:16px">${t.area} m²</span>
+            <span style="display:block;font-size:12px;opacity:.75;margin-top:2px">${t.quartos===0?'Studio':t.quartos+' quartos'} · ${t.vagas} vaga(s)</span>
+          </button>`).join('')}
+        </div>
+
+        <div style="border:1px solid var(--card-brd);border-radius:20px;overflow:hidden;background:var(--card);box-shadow:var(--shadow)">
+          <div style="display:grid;grid-template-columns:1fr 1fr">
+            <div style="height:280px;position:relative;overflow:hidden;border-right:1px solid var(--card-brd);background:var(--ph1)">
+              <img src="${esc(cur.interna||PLACEHOLDER_IMG)}" alt="Ambiente" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+              <span style="position:absolute;left:12px;top:10px;padding:4px 10px;border-radius:8px;background:rgba(11,13,16,.6);color:#fff;font-size:11px;font-weight:600;backdrop-filter:blur(6px)">Ambiente · ${curSel.area} m²</span>
+            </div>
+            <div style="padding:22px 24px;display:flex;flex-direction:column;justify-content:center">
+              <div style="color:var(--muted);font-size:13px">${curSel.quartos===0?'Studio':curSel.quartos+' quartos'} · ${curSel.vagas} vaga(s) · ${curSel.area} m²</div>
+              <div style="font-size:34px;font-weight:600;letter-spacing:-.02em;margin:6px 0 4px">${fmt(curSel.preco)}</div>
+              <div style="color:var(--muted);font-size:13px;margin-bottom:18px">≈ ${curSel.area?fmt(curSel.preco/curSel.area):'—'} /m²</div>
+              <button style="height:48px;background:var(--red);color:#fff;border:none;border-radius:12px;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer">Simular financiamento</button>
+              <button style="height:44px;margin-top:8px;background:transparent;color:var(--text);border:1px solid var(--card-brd);border-radius:12px;font-family:inherit;font-weight:500;font-size:14px;cursor:pointer">Falar com corretor</button>
+            </div>
+          </div>
+        </div>
+
+        <h2 style="font-size:24px;font-weight:600;margin:44px 0 14px;letter-spacing:-.01em">Diferenciais & localização</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          ${cur.difs.map(d=>`<div style="border:1px solid var(--card-brd);border-radius:12px;padding:13px 15px;background:var(--card);font-size:14px;font-weight:500;display:flex;gap:8px"><span style="color:var(--gold)">◆</span>${esc(d)}</div>`).join('')}
+        </div>
+        <div id="empMap" style="height:220px;border-radius:16px;background:var(--surface);border:1px solid var(--card-brd);position:relative;overflow:hidden"></div>
+
+        <h2 style="font-size:24px;font-weight:600;margin:44px 0 14px;letter-spacing:-.01em">Vídeo do empreendimento</h2>
+        ${videoBlock}
+
+        <h2 style="font-size:24px;font-weight:600;margin:44px 0 14px;letter-spacing:-.01em">Explore o bairro</h2>
+        <p style="color:var(--muted);font-size:15px;line-height:1.6">${esc(cur.bairroTxt)}</p>
+      </div>
+
+      <aside style="position:sticky;top:88px;align-self:start;display:flex;flex-direction:column;gap:16px">
+        <div style="border:1px solid var(--gold);border-radius:18px;padding:22px;background:var(--card);box-shadow:var(--shadow)">
+          <div style="font-weight:600;font-size:16px;margin-bottom:4px">Evolução da obra</div>
+          <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px">Acompanhe fotos mês a mês do canteiro. Libere com um cadastro rápido.</p>
+          <button style="width:100%;height:46px;background:var(--gold);color:#111;border:none;border-radius:11px;font-family:inherit;font-weight:600;font-size:14.5px;cursor:pointer">Liberar evolução (cadastro)</button>
+        </div>
+        <div style="border:1px solid var(--card-brd);border-radius:18px;padding:22px;background:var(--card);box-shadow:var(--shadow)">
+          <div style="font-weight:600;font-size:16px;margin-bottom:14px">Resumo</div>
+          ${resumo.map(r=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--card-brd);font-size:14px"><span style="color:var(--muted)">${esc(r.k)}</span><span style="font-weight:600;text-align:right">${esc(r.v)}</span></div>`).join('')}
+          <button style="width:100%;height:46px;margin-top:16px;background:transparent;color:var(--text);border:1px solid var(--card-brd);border-radius:11px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer">⬇ Book completo (PDF)</button>
+        </div>
+      </aside>
+    </div>
+  `;
+
+  if(cur.lat!=null && cur.lng!=null && window.L){
+    setTimeout(()=>{
+      const m=window.L.map('empMap',{scrollWheelZoom:false,zoomControl:false,dragging:false}).setView([cur.lat,cur.lng],15);
+      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(m);
+      window.L.marker([cur.lat,cur.lng]).addTo(m);
+      setTimeout(()=>{try{m.invalidateSize();}catch(_){}},100);
+    },50);
+  }
+}
+
+/* ---------------- REVEAL ON SCROLL ---------------- */
+let io=null;
+function setupReveal(){
+  if(!io){
+    io=new IntersectionObserver(entries=>{
+      entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('reveal-in'); io.unobserve(en.target); } });
+    },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  }
+  const groups=new Map();
+  document.querySelectorAll('[data-reveal]').forEach(el=>{
+    if(el.dataset.revealReady) return;
+    el.dataset.revealReady='1';
+    el.classList.add('reveal-init');
+    const p=el.parentElement;
+    const i=(groups.get(p)||0); groups.set(p,i+1);
+    el.style.transitionDelay=(i*90)+'ms';
+    io.observe(el);
+  });
+}
+
+/* ---------------- MAIN LOOP ---------------- */
+function tick(){
+  if(trackEl && trackEl.children.length){
+    if(!pausedC && !downC && state.zoom==null) pos+=speedC;
+    pos+=vel; vel*=0.90; if(Math.abs(vel)<0.0002) vel=0;
+    layoutCarousel();
+  }
+  if(track2El && track2El.children.length){
+    if(!paused2 && !down2) pos2+=speed2;
+    pos2+=vel2; vel2*=0.90; if(Math.abs(vel2)<0.0002) vel2=0;
+    layoutTestimonials();
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------------- BOOT ---------------- */
+(async function boot(){
+  try{
+    EMPS = await loadAll();
+  }catch(err){
+    q('loadOverlay').textContent='Erro ao carregar o catálogo. Verifique a conexão e recarregue a página.';
+    console.error(err);
+    return;
+  }
+  q('heroCount').textContent = EMPS.length;
+
+  const bairros=[...new Set(EMPS.map(e=>e.bairro))].sort();
+  q('fBairro').innerHTML = '<option value="" style="color:#111">Todos os bairros</option>' + bairros.map(b=>`<option value="${esc(b)}" style="color:#111">${esc(b)}</option>`).join('');
+
+  const heroVideo = q('heroVideo');
+  heroVideo.muted=true; heroVideo.loop=true; heroVideo.playsInline=true;
+  heroVideo.addEventListener('ended', ()=>{ heroVideo.currentTime=0; heroVideo.play().catch(()=>{}); });
+  const p = heroVideo.play(); if(p && p.catch) p.catch(()=>{});
+
+  renderLogos();
+  renderCarousel();
+  renderBairroCards();
+  renderStats();
+  renderMap();
+  renderCompare();
+  renderTestimonials();
+  renderFooterBairros();
+
+  q('loadOverlay').style.display='none';
+  q('root').style.display='block';
+
+  requestAnimationFrame(tick);
+  setTimeout(setupReveal,60);
+  window.addEventListener('scroll', ()=>setupReveal(), {passive:true});
+})();
+</script>
+</body>
+</html>
