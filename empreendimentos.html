@@ -239,7 +239,7 @@ const ACTIONS={
     const sourceEl = id!=null ? document.querySelector(`[data-reveal][data-id="${id}"]`) : null;
     animateZoomClose(sourceEl, modal, backdrop, ()=>{ state.zoomId=null; renderZoom(); });
   },
-  openDetail(t){ window.location.href='novo-index.html?emp='+encodeURIComponent(t.dataset.id); },
+  openDetail(t){ window.location.href='empreendimento.html?id='+encodeURIComponent(t.dataset.id); },
   noop(){},
 };
 document.addEventListener('click', e=>{
