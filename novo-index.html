@@ -413,10 +413,9 @@ function renderCarousel(){
   const cardsHtml = list.map((e,i)=>{
     const selIdx=state.sel[e.id]??0, t=e.tips[selIdx]||e.tips[0];
     const img = e.fachada || PLACEHOLDER_IMG;
-    const isZoomed = state.zoom===i;
     return `
     <div data-act="cardClick" data-idx="${i}" data-dblact="openEmp" data-id="${e.id}" style="position:absolute;left:50%;top:50%;width:300px;will-change:transform,opacity;transform:translate(-50%,-50%)">
-      <div style="position:relative;height:440px;border-radius:22px;overflow:hidden;background:var(--ph1);box-shadow:${isZoomed?'0 40px 100px rgba(0,0,0,.55)':'var(--shadow)'}">
+      <div class="card-inner" style="position:relative;height:440px;border-radius:22px;overflow:hidden;background:var(--ph1);box-shadow:var(--shadow)">
         <img data-src="${esc(img)}" alt="${esc(e.nome)}" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;background:linear-gradient(135deg,var(--ph1),var(--ph2))">
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,transparent 22%,transparent 40%,rgba(0,0,0,.92) 100%)"></div>
         <div style="position:absolute;left:12px;top:12px;display:flex;gap:6px;flex-wrap:wrap">
@@ -435,7 +434,7 @@ function renderCarousel(){
               <div style="display:flex;align-items:center;gap:8px"><span style="font-size:23px;font-weight:600;letter-spacing:-.01em">${fmt(t.preco)}</span></div>
             </div>
           </div>
-          ${isZoomed?`<button data-act="openEmp" data-id="${e.id}" style="margin-top:12px;width:100%;height:42px;border-radius:999px;border:none;background:var(--red);color:#fff;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer">Ver empreendimento →</button>`:''}
+          <div class="cta-slot"></div>
         </div>
       </div>
     </div>`;
@@ -458,15 +457,18 @@ function layoutCarousel(){
   for(let i=0;i<n;i++){
     const card=el[i];
     const s=card.style;
+    const inner=card.firstElementChild;
     if(state.zoom===i){
       // This card pops out of the arc: comes toward the camera and grows
       // slightly, instead of opening a separate floating modal.
       s.transform=`translate(-50%,-50%) translate3d(0px,0,220px) scale(1.16)`;
       s.opacity=1; s.zIndex=9000; s.pointerEvents='auto'; s.filter='none';
+      if(inner) inner.style.boxShadow='0 40px 100px rgba(0,0,0,.55)';
       const img=card.querySelector('img[data-src]');
       if(img){ img.src=img.dataset.src; img.removeAttribute('data-src'); }
       continue;
     }
+    if(inner) inner.style.boxShadow='var(--shadow)';
     let rel=((i-pos)%n+n)%n; if(rel>n/2) rel-=n;
     const ang=rel*step;
     const x=Math.sin(ang)*R, z=-Math.cos(ang)*D, ry=-ang*50;
@@ -491,12 +493,48 @@ function layoutCarousel(){
   }
 }
 
+// Briefly enables a smooth CSS transition on all cards so the zoom
+// pop-forward/return animates instead of snapping instantly, then removes
+// it again so the continuous auto-rotation stays perfectly frame-locked.
+function pulseCardTransition(){
+  if(!trackEl) return;
+  const dur=380;
+  const cards=[...trackEl.children];
+  cards.forEach(c=>{
+    c.style.transition=`transform ${dur}ms cubic-bezier(.22,.9,.24,1), opacity ${dur}ms ease, filter ${dur}ms ease`;
+    const inner=c.firstElementChild;
+    if(inner) inner.style.transition=`box-shadow ${dur}ms ease`;
+  });
+  clearTimeout(pulseCardTransition._t);
+  pulseCardTransition._t=setTimeout(()=>{
+    cards.forEach(c=>{
+      c.style.transition='';
+      const inner=c.firstElementChild;
+      if(inner) inner.style.transition='';
+    });
+  }, dur+50);
+}
+
+function setZoomCta(idx, list){
+  if(!trackEl || idx==null) return;
+  const card=trackEl.children[idx];
+  if(!card) return;
+  const slot=card.querySelector('.cta-slot');
+  if(!slot) return;
+  if(state.zoom===idx){
+    const e=list[idx];
+    slot.innerHTML=`<button data-act="openEmp" data-id="${e.id}" style="margin-top:12px;width:100%;height:42px;border-radius:999px;border:none;background:var(--red);color:#fff;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer">Ver empreendimento →</button>`;
+  } else {
+    slot.innerHTML='';
+  }
+}
+
 function bindCarouselDrag(){
   if(!stageEl) return;
   stageEl.onmouseenter=()=>{ pausedC=true; };
   stageEl.onmouseleave=()=>{ pausedC=false; };
   stageEl.onpointerdown=e=>{ downC=true; movedC=false; startXC=e.clientX; lastXC=e.clientX; vel=0; stageEl.style.cursor='grabbing'; try{stageEl.setPointerCapture(e.pointerId);}catch(_){} };
-  stageEl.onpointermove=e=>{ if(!downC) return; const dx=e.clientX-lastXC; lastXC=e.clientX; if(Math.abs(e.clientX-startXC)>5){ movedC=true; if(state.zoom!=null){ state.zoom=null; renderCarousel(); } } pos-=dx*0.005; vel=-dx*0.005; };
+  stageEl.onpointermove=e=>{ if(!downC) return; const dx=e.clientX-lastXC; lastXC=e.clientX; if(Math.abs(e.clientX-startXC)>10){ movedC=true; if(state.zoom!=null){ const prevZoom=state.zoom; state.zoom=null; pulseCardTransition(); setZoomCta(prevZoom, filtered()); } } pos-=dx*0.005; vel=-dx*0.005; };
   stageEl.onpointerup=()=>{ downC=false; stageEl.style.cursor='grab'; };
 }
 
@@ -504,7 +542,16 @@ function bindCarouselDrag(){
 const ACTIONS={
   goHome(){ state.screen='home'; state.zoom=null; q('homeScreen').style.display='block'; q('empScreen').style.display='none'; window.scrollTo({top:0}); },
   toggleTheme(){ state.theme = state.theme==='light'?'dark':'light'; q('root').dataset.theme=state.theme; q('themeBtn').textContent = state.theme==='light'?'☾':'☀'; },
-  cardClick(t){ if(movedC) return; const idx=+t.dataset.idx; state.zoom = state.zoom===idx?null:idx; renderCarousel(); },
+  cardClick(t){
+    if(movedC) return;
+    const idx=+t.dataset.idx;
+    const prevZoom=state.zoom;
+    state.zoom = prevZoom===idx ? null : idx;
+    const list=filtered();
+    pulseCardTransition();
+    if(prevZoom!=null) setZoomCta(prevZoom, list);
+    if(state.zoom!=null) setZoomCta(state.zoom, list);
+  },
   zoomClose(){ state.zoom=null; renderCarousel(); },
   openEmp(t){ const id=t.dataset.id; state.screen='emp'; state.currentId=id; state.zoom=null; renderEmpScreen(); q('homeScreen').style.display='none'; q('empScreen').style.display='block'; window.scrollTo({top:0}); },
   selectTip(t){ const eid = filtered()[+t.dataset.idx]?.id; if(!eid) return; state.sel[eid]=+t.dataset.tip; renderCarousel(); },
