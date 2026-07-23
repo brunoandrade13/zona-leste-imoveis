@@ -131,7 +131,6 @@
     <!-- CARROSSEL DE ASSINATURA -->
     <section id="carrossel" style="padding:70px 0 100px;background:var(--surface);border-top:1px solid var(--card-brd);margin-top:20px">
       <div style="max-width:1280px;margin:0 auto;padding:0 24px;text-align:center" data-reveal>
-        <div style="color:var(--red);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px"><span id="resultCountB">—</span> resultados</div>
         <h2 style="font-size:clamp(28px,4vw,44px);font-weight:600;letter-spacing:-.02em">Explore os <span class="serif" style="color:var(--red)">lançamentos</span></h2>
       </div>
       <div id="carrosselBody"></div>
@@ -139,12 +138,9 @@
 
     <!-- CARDS DE BAIRRO -->
     <section id="bairros" style="max-width:1280px;margin:0 auto;padding:96px 24px 40px">
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:34px;flex-wrap:wrap" data-reveal>
-        <div>
-          <div style="color:var(--red);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Onde procurar</div>
-          <h2 style="font-size:clamp(28px,4vw,42px);font-weight:600;letter-spacing:-.02em">Bairros da <span class="serif" style="color:var(--red)">Zona Leste</span></h2>
-        </div>
-        <p style="color:var(--muted);max-width:340px;font-size:15px">Contexto de mobilidade e vizinhança para orientar a busca antes de abrir os empreendimentos.</p>
+      <div style="margin-bottom:34px" data-reveal>
+        <div style="color:var(--red);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Onde procurar</div>
+        <h2 style="font-size:clamp(28px,4vw,42px);font-weight:600;letter-spacing:-.02em">Bairros da <span class="serif" style="color:var(--red)">Zona Leste</span></h2>
       </div>
       <div id="bairrosCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px"></div>
       <div style="text-align:center;margin-top:30px">
@@ -185,7 +181,6 @@
     <section id="prova" style="padding:74px 0 94px;background:var(--surface);border-top:1px solid var(--card-brd)">
       <div style="max-width:1280px;margin:0 auto;padding:0 24px;text-align:center" data-reveal>
         <h2 style="font-size:clamp(28px,4vw,44px);font-weight:600;letter-spacing:-.02em">Quem comprou pelo <span class="serif" style="color:var(--red)">catálogo</span></h2>
-        <div style="display:inline-flex;margin-top:12px;padding:5px 14px;border-radius:999px;background:var(--card);border:1px solid var(--card-brd);color:var(--muted);font-size:12.5px;font-weight:600">Exemplos ilustrativos — ainda não são depoimentos reais de clientes</div>
       </div>
       <div id="stage2" style="position:relative;height:340px;margin-top:28px;perspective:1500px;cursor:grab;touch-action:pan-y;user-select:none">
         <div id="track2" style="position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none"></div>
@@ -430,7 +425,6 @@ function tipsPillsHtml(e, selIdx, eventCardIdx){
 function renderCarousel(){
   const list=filtered();
   q('resultCountA').textContent=filteredFullCount();
-  q('resultCountB').textContent=list.length;
 
   const cardsHtml = list.map((e,i)=>{
     const selIdx=state.sel[e.id]??0, t=e.tips[selIdx]||e.tips[0];
@@ -784,13 +778,33 @@ function renderMap(){
   if(leafletMap){ try{leafletMap.remove();}catch(_){} }
   leafletMap=L.map(el,{scrollWheelZoom:false}).setView([-23.545,-46.53],12);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(leafletMap);
+
+  // Many developments share the exact same geocoded point (neighborhood-level
+  // precision, not per-building), so plotting raw lat/lng stacks dozens of
+  // pins on the same pixel. Group by coordinate and spread each group into a
+  // small rosette so every development still gets its own visible, clickable pin.
+  const groups={};
   EMPS.forEach(e=>{
     if(e.lat==null||e.lng==null||isNaN(e.lat)||isNaN(e.lng)) return;
-    const preco = e.tips.length? fmtK(Math.min(...e.tips.map(t=>t.preco))) : '—';
-    const icon=L.divIcon({className:'',iconSize:[0,0],html:'<div style="background:#9E1B1B;color:#fff;font:600 11px/1 sans-serif;padding:5px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:translate(-50%,-130%)">'+preco+'</div>'});
-    const m=L.marker([e.lat,e.lng],{icon}).addTo(leafletMap);
-    m.bindTooltip(e.nome,{direction:'top',offset:[0,-14]});
-    m.on('click',()=>{ window.location.href='empreendimento.html?id='+encodeURIComponent(e.id); });
+    const key=e.lat.toFixed(5)+','+e.lng.toFixed(5);
+    (groups[key]=groups[key]||[]).push(e);
+  });
+
+  Object.values(groups).forEach(group=>{
+    const n=group.length;
+    group.forEach((e,idx)=>{
+      let lat=e.lat, lng=e.lng;
+      if(n>1){
+        const r=0.0022+Math.floor(idx/8)*0.0022; // ring radius, extra rings if a spot has 8+
+        const ang=(2*Math.PI*idx)/Math.min(n,8) + (Math.floor(idx/8)*0.4);
+        lat+=Math.sin(ang)*r; lng+=Math.cos(ang)*r*1.25;
+      }
+      const preco = e.tips.length? fmtK(Math.min(...e.tips.map(t=>t.preco))) : '—';
+      const icon=L.divIcon({className:'',iconSize:[0,0],html:'<div style="background:#9E1B1B;color:#fff;font:600 11px/1 sans-serif;padding:5px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:translate(-50%,-130%)">'+preco+'</div>'});
+      const m=L.marker([lat,lng],{icon}).addTo(leafletMap);
+      m.bindTooltip(e.nome,{direction:'top',offset:[0,-14]});
+      m.on('click',()=>{ window.location.href='empreendimento.html?id='+encodeURIComponent(e.id); });
+    });
   });
   setTimeout(()=>{ try{leafletMap.invalidateSize();}catch(_){} },250);
 }
