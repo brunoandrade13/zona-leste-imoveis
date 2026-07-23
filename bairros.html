@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bairros da Zona Leste — Zona Leste Lançamentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<script src="bairros-data.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'General Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  :root{
+    --bg:#FFFFFF;--text:#111111;--muted:#6B6F76;--red:#9E1B1B;--gold:#C9A227;
+    --glass:rgba(255,255,255,.65);--glass-brd:rgba(17,17,17,.08);
+    --card:#FFFFFF;--card-brd:rgba(17,17,17,.09);--surface:#F6F6F4;
+    --shadow:0 12px 40px rgba(17,17,17,.10);--ph1:#EDEBE6;--ph2:#E2DFD8;
+  }
+  [data-theme="dark"]{
+    --bg:#0B0D10;--text:#FFFFFF;--muted:#A8ACB3;
+    --glass:rgba(16,19,24,.55);--glass-brd:rgba(255,255,255,.12);
+    --card:#12151A;--card-brd:rgba(255,255,255,.10);--surface:#111418;
+    --shadow:0 16px 44px rgba(0,0,0,.55);--ph1:#1A1E24;--ph2:#22272E;
+  }
+  a{color:var(--red);text-decoration:none}
+  a:hover{color:var(--gold)}
+  .serif{font-family:'Newsreader',Georgia,serif;font-style:italic;font-weight:500}
+  .reveal-init{opacity:0;transform:translateY(34px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
+  .reveal-in{opacity:1 !important;transform:none}
+  @keyframes zoomIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+  .hoverop:hover{opacity:1 !important;background:var(--surface)}
+  .hovertheme:hover{filter:brightness(1.08)}
+  .hoverlogin:hover{background:var(--gold) !important;color:#111 !important}
+  .hoverlogin:hover .arrow{transform:translateX(3px)}
+  .bcard{transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s cubic-bezier(.2,.7,.2,1)}
+  .bcard:hover{transform:translateY(-8px);box-shadow:0 32px 60px -18px rgba(17,17,17,.5)}
+  .bcard:hover img{transform:scale(1.06)}
+  .bcard img{transition:transform .5s ease}
+  #loadOverlay{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+
+<div id="loadOverlay">Carregando bairros…</div>
+
+<div id="root" data-theme="light" style="min-height:100vh;background:var(--bg);color:var(--text);transition:background .3s,color .3s;overflow-x:hidden;display:none">
+  <header style="position:fixed;top:0;left:0;right:0;z-index:50;background:transparent;padding-top:20px">
+    <div style="display:flex;align-items:center;justify-content:center;padding:0 20px">
+      <div style="display:flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:8px 8px 8px 16px;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.12)">
+        <a href="novo-index.html" style="display:flex;align-items:center;gap:9px;padding-right:6px">
+          <span style="width:30px;height:30px;border-radius:8px;background:var(--red);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px">ZL</span>
+          <span style="font-weight:600;font-size:15.5px;letter-spacing:-.01em;white-space:nowrap;color:var(--text)">Zona Leste</span>
+        </a>
+        <nav style="display:flex;align-items:center;gap:2px">
+          <a href="empreendimentos.html" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Empreendimentos</a>
+          <a href="bairros.html" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:600;color:var(--red);white-space:nowrap;background:var(--surface)">Bairros</a>
+          <a href="novo-index.html#numeros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Faça sua simulação</a>
+        </nav>
+        <button id="themeBtn" data-act="toggleTheme" title="Alternar tema" class="hovertheme" style="width:38px;height:38px;border-radius:999px;border:none;background:var(--surface);cursor:pointer;color:var(--text);display:grid;place-items:center;font-size:15px;flex-shrink:0">☾</button>
+        <button class="hoverlogin" style="height:38px;padding:0 18px;border-radius:999px;border:none;background:var(--red);cursor:pointer;color:#fff;font-family:inherit;font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;white-space:nowrap"><span>Entrar</span><span class="arrow" style="transition:transform .25s">→</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main style="max-width:1320px;margin:0 auto;padding:128px 24px 90px">
+    <div data-reveal style="max-width:720px;margin-bottom:44px">
+      <div style="color:var(--red);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Onde procurar</div>
+      <h1 style="font-size:clamp(34px,5vw,58px);font-weight:600;letter-spacing:-.02em;line-height:1.03">Bairros da <span class="serif" style="color:var(--red)">Zona Leste</span></h1>
+      <p style="color:var(--muted);font-size:16.5px;line-height:1.55;margin-top:16px">Conheça o perfil de cada bairro antes de escolher seu empreendimento — história, mobilidade e o que cada região oferece. Clique num card para ver mais.</p>
+    </div>
+
+    <div id="bairrosGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px"></div>
+  </main>
+
+  <footer style="border-top:1px solid var(--card-brd);background:var(--surface);padding:22px 24px">
+    <p style="max-width:1320px;margin:0 auto;color:var(--muted);font-size:11.5px;line-height:1.6">Fotos dos bairros: Wikimedia Commons, sob licenças Creative Commons (CC BY / CC BY-SA) — crédito do autor exibido em cada foto na página de cada bairro.</p>
+  </footer>
+</div>
+
+<div id="zoomRoot"></div>
+
+<script>
+"use strict";
+const SB='https://xmnggeptpwxsmcartyzt.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtbmdnZXB0cHd4c21jYXJ0eXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NjkzMzIsImV4cCI6MjA5NzE0NTMzMn0.2HWGvTAuEuzEHXcEbOr9t0gC1yc765lxQxk080EDmfg';
+const H={apikey:KEY,Authorization:`Bearer ${KEY}`};
+const q=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PLACEHOLDER_IMG='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="%23EDEBE6"/></svg>');
+
+async function sbFetch(path,params={}){
+  const u=new URL(`${SB}/rest/v1/${path}`);
+  for(const[k,v]of Object.entries(params))u.searchParams.set(k,v);
+  const r=await fetch(u,{headers:{...H,'Range':'0-9999'}});
+  return r.json();
+}
+
+async function loadCounts(){
+  const emps=await sbFetch('empreendimentos',{select:'id,bairro,bairro_comercial',ativo:'eq.true',limit:'500'});
+  const counts={}; Object.keys(BAIRRO_DB_NAMES).forEach(k=>counts[k]=0);
+  emps.forEach(e=>{
+    let match=Object.entries(BAIRRO_DB_NAMES).find(([id,names])=>names.includes(e.bairro));
+    if(!match) match=Object.entries(BAIRRO_DB_NAMES).find(([id,names])=>names.includes(e.bairro_comercial));
+    if(match) counts[match[0]]++;
+  });
+  return counts;
+}
+
+let COUNTS={};
+const state={ theme:'light', zoomId:null };
+const ACTIONS={
+  toggleTheme(){ state.theme=state.theme==='light'?'dark':'light'; q('root').dataset.theme=state.theme; q('themeBtn').textContent=state.theme==='light'?'☾':'☀'; },
+  zoomOpen(t){ state.zoomId=t.dataset.id; renderZoom(); },
+  zoomClose(){ state.zoomId=null; renderZoom(); },
+  noop(){},
+  openBairro(t){ window.location.href='bairro.html?id='+encodeURIComponent(t.dataset.id); },
+};
+document.addEventListener('click', e=>{
+  const t=e.target.closest('[data-act]');
+  if(!t) return;
+  ACTIONS[t.dataset.act]?.(t,e);
+});
+
+function photoUrl(b, idx){
+  if(!b.fotos.length) return null;
+  const f=b.fotos[Math.min(idx,b.fotos.length-1)];
+  return 'assets/bairros/'+b.id+'/'+f.file;
+}
+
+function renderGrid(){
+  q('bairrosGrid').innerHTML = BAIRROS_DATA.map(b=>{
+    const foto=photoUrl(b,0);
+    const qtd=COUNTS[b.id]||0;
+    return `
+    <div data-reveal data-act="zoomOpen" data-id="${b.id}" class="bcard" style="position:relative;height:420px;border-radius:20px;overflow:hidden;background:var(--ph1);cursor:pointer;box-shadow:0 12px 30px -14px rgba(17,17,17,.28)">
+      ${foto?`<img src="${esc(foto)}" alt="${esc(b.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">`:`<div style="position:absolute;inset:0;background:linear-gradient(135deg,var(--ph1),var(--ph2))"></div>`}
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 34%,rgba(0,0,0,.4) 60%,rgba(0,0,0,.88) 100%)"></div>
+      <span style="position:absolute;left:14px;top:14px;padding:6px 13px;border-radius:999px;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px);color:#fff;font-size:12.5px;font-weight:600">${qtd} empreend.</span>
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:22px;color:#fff">
+        <div style="display:flex;align-items:center;gap:7px;color:var(--gold);font-size:12.5px;font-weight:600;margin-bottom:8px;text-shadow:0 1px 4px rgba(0,0,0,.5)">◆ ${esc(b.mob)}</div>
+        <h3 style="font-size:26px;font-weight:600;letter-spacing:-.01em;line-height:1.05;margin-bottom:8px;text-shadow:0 1px 8px rgba(0,0,0,.5)">${esc(b.nome)}</h3>
+        <p style="font-size:14px;line-height:1.5;opacity:.92;text-shadow:0 1px 4px rgba(0,0,0,.5)">${esc(b.desc)}</p>
+      </div>
+    </div>`;
+  }).join('');
+  setupReveal();
+}
+
+function renderZoom(){
+  if(!state.zoomId){ q('zoomRoot').innerHTML=''; return; }
+  const b=BAIRROS_DATA.find(x=>x.id===state.zoomId);
+  if(!b){ q('zoomRoot').innerHTML=''; return; }
+  const foto=photoUrl(b,0);
+  const qtd=COUNTS[b.id]||0;
+  q('zoomRoot').innerHTML=`
+    <div data-act="zoomClose" style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:32px">
+      <div data-act="noop" style="position:relative;width:min(920px,100%);max-height:88vh;overflow:hidden;border-radius:24px;background:var(--card);box-shadow:0 40px 90px rgba(0,0,0,.5);display:grid;grid-template-columns:1.05fr 1fr;animation:zoomIn .3s cubic-bezier(.2,.8,.2,1)">
+        <div style="position:relative;min-height:440px;background:var(--ph1)">
+          ${foto?`<img src="${esc(foto)}" alt="${esc(b.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">`:''}
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.55))"></div>
+          <div style="position:absolute;left:22px;bottom:22px;color:#fff">
+            <div style="display:flex;align-items:center;gap:7px;color:var(--gold);font-size:12.5px;font-weight:600;margin-bottom:6px;text-shadow:0 1px 4px rgba(0,0,0,.5)">◆ ${esc(b.mob)}</div>
+            <h3 style="font-size:34px;font-weight:600;letter-spacing:-.02em;text-shadow:0 2px 10px rgba(0,0,0,.5)">${esc(b.nome)}</h3>
+          </div>
+        </div>
+        <div style="padding:30px 30px 28px;display:flex;flex-direction:column;overflow-y:auto">
+          <p style="font-size:15.5px;line-height:1.6;color:var(--text);margin-bottom:22px">${esc(b.texto[0])}</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;margin-bottom:24px">
+            <div style="border:1px solid var(--card-brd);border-radius:13px;padding:13px 15px;background:var(--surface)"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:3px">Empreendimentos</div><div style="font-size:16px;font-weight:600">${qtd}</div></div>
+            <div style="border:1px solid var(--card-brd);border-radius:13px;padding:13px 15px;background:var(--surface)"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:3px">Perfil</div><div style="font-size:16px;font-weight:600">${b.tier===1?'Alto volume':'Complementar'}</div></div>
+          </div>
+          <button data-act="openBairro" data-id="${b.id}" style="margin-top:auto;width:100%;height:50px;border-radius:12px;border:none;background:var(--red);color:#fff;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer">Ver mais informações do bairro →</button>
+        </div>
+        <button data-act="zoomClose" style="position:absolute;top:14px;right:14px;width:38px;height:38px;border-radius:999px;border:none;background:rgba(0,0,0,.5);color:#fff;cursor:pointer;font-size:16px;backdrop-filter:blur(6px)">✕</button>
+      </div>
+    </div>`;
+}
+
+let io=null;
+function setupReveal(){
+  if(!io){
+    io=new IntersectionObserver(entries=>{
+      entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('reveal-in'); io.unobserve(en.target); } });
+    },{threshold:0.1, rootMargin:'0px 0px -6% 0px'});
+  }
+  const groups=new Map();
+  document.querySelectorAll('[data-reveal]').forEach(el=>{
+    if(el.dataset.revealReady) return;
+    el.dataset.revealReady='1';
+    el.classList.add('reveal-init');
+    const p=el.parentElement, i=(groups.get(p)||0); groups.set(p,i+1);
+    el.style.transitionDelay=(i*70)+'ms';
+    io.observe(el);
+  });
+}
+
+(async function boot(){
+  try{
+    COUNTS=await loadCounts();
+  }catch(err){
+    console.error(err);
+    COUNTS={};
+  }
+  renderGrid();
+  q('loadOverlay').style.display='none';
+  q('root').style.display='block';
+})();
+</script>
+</body>
+</html>
