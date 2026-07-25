@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet">
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
 <script src="bairros-data.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
@@ -28,6 +29,7 @@
   a{color:var(--red);text-decoration:none}
   a:hover{color:var(--gold)}
   .serif{font-family:'Newsreader',Georgia,serif;font-style:italic;font-weight:500}
+  .msi{font-family:'Material Symbols Outlined';font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;font-size:18px;line-height:1;vertical-align:-3px;display:inline-block;font-style:normal;letter-spacing:normal;text-transform:none;white-space:nowrap;word-wrap:normal;direction:ltr}
   .reveal-init{opacity:0;transform:translateY(34px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
   .reveal-in{opacity:1 !important;transform:none}
   @keyframes zoomIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
@@ -57,6 +59,7 @@
         <nav style="display:flex;align-items:center;gap:2px">
           <a href="empreendimentos.html" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Empreendimentos</a>
           <a href="bairros.html" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:600;color:var(--red);white-space:nowrap;background:var(--surface)">Bairros</a>
+          <a href="mapa.html" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Mapa</a>
           <a href="novo-index.html#numeros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Faça sua simulação</a>
         </nav>
         <button id="themeBtn" data-act="toggleTheme" title="Alternar tema" class="hovertheme" style="width:38px;height:38px;border-radius:999px;border:none;background:var(--surface);cursor:pointer;color:var(--text);display:grid;place-items:center;font-size:15px;flex-shrink:0">☾</button>
@@ -89,6 +92,7 @@ const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6
 const H={apikey:KEY,Authorization:`Bearer ${KEY}`};
 const q=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MSI=(name,size=18,cls='')=>`<span class="msi ${cls}" style="font-size:${size}px">${name}</span>`;
 const PLACEHOLDER_IMG='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="%23EDEBE6"/></svg>');
 
 async function sbFetch(path,params={}){
@@ -140,7 +144,7 @@ function renderGrid(){
       <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 34%,rgba(0,0,0,.4) 60%,rgba(0,0,0,.88) 100%)"></div>
       <span style="position:absolute;left:14px;top:14px;padding:6px 13px;border-radius:999px;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px);color:#fff;font-size:12.5px;font-weight:600">${qtd} empreend.</span>
       <div style="position:absolute;left:0;right:0;bottom:0;padding:22px;color:#fff">
-        <div style="display:flex;align-items:center;gap:7px;color:var(--gold);font-size:12.5px;font-weight:600;margin-bottom:8px;text-shadow:0 1px 4px rgba(0,0,0,.5)">◆ ${esc(b.mob)}</div>
+        <div style="display:flex;align-items:center;gap:7px;color:var(--gold);font-size:12.5px;font-weight:600;margin-bottom:8px;text-shadow:0 1px 4px rgba(0,0,0,.5)">${MSI('star',14)} ${esc(b.mob)}</div>
         <h3 style="font-size:26px;font-weight:600;letter-spacing:-.01em;line-height:1.05;margin-bottom:8px;text-shadow:0 1px 8px rgba(0,0,0,.5)">${esc(b.nome)}</h3>
         <p style="font-size:14px;line-height:1.5;opacity:.92;text-shadow:0 1px 4px rgba(0,0,0,.5)">${esc(b.desc)}</p>
       </div>
@@ -162,7 +166,7 @@ function renderZoom(){
           ${foto?`<img src="${esc(foto)}" alt="${esc(b.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">`:''}
           <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.55))"></div>
           <div style="position:absolute;left:22px;bottom:22px;color:#fff">
-            <div style="display:flex;align-items:center;gap:7px;color:var(--gold);font-size:12.5px;font-weight:600;margin-bottom:6px;text-shadow:0 1px 4px rgba(0,0,0,.5)">◆ ${esc(b.mob)}</div>
+            <div style="display:flex;align-items:center;gap:7px;color:var(--gold);font-size:12.5px;font-weight:600;margin-bottom:6px;text-shadow:0 1px 4px rgba(0,0,0,.5)">${MSI('star',14)} ${esc(b.mob)}</div>
             <h3 style="font-size:34px;font-weight:600;letter-spacing:-.02em;text-shadow:0 2px 10px rgba(0,0,0,.5)">${esc(b.nome)}</h3>
           </div>
         </div>
