@@ -182,7 +182,7 @@
         <div style="color:var(--red);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Panorama</div>
         <h2 style="font-size:clamp(28px,4vw,42px);font-weight:600;letter-spacing:-.02em">Mapa geral dos <span class="serif" style="color:var(--red)">lançamentos</span></h2>
       </div>
-      <div id="mapEl" data-reveal style="height:460px;border:1px solid var(--card-brd);border-radius:22px;overflow:hidden;background:var(--surface);position:relative;z-index:0"></div>
+      <div id="mapEl" data-reveal style="height:560px;border:1px solid var(--card-brd);border-radius:22px;overflow:hidden;background:var(--surface);position:relative;z-index:0"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px">
         <p style="color:var(--muted);font-size:13px">Zona Leste de São Paulo · passe o mouse num marcador para ver o card.</p>
         <a href="mapa.html" style="font-size:13.5px;font-weight:600;color:var(--red);white-space:nowrap">Ver mapa completo e buscar por região →</a>
@@ -899,6 +899,7 @@ async function loadMapDistricts(map, withEmpSet){
   if(!feats||!feats.length){
     L.polygon(zlShapeFallback,{color:'#fff',weight:2,fillColor:'#F0EEE9',fillOpacity:1}).addTo(map);
     map.fitBounds(L.latLngBounds(zlShapeFallback),{animate:false,padding:[6,6]});
+    map.setZoom(map.getZoom()+0.75);
     return;
   }
   const layer=L.geoJSON({type:'FeatureCollection',features:feats},{
@@ -911,6 +912,7 @@ async function loadMapDistricts(map, withEmpSet){
     },
   }).addTo(map);
   map.fitBounds(layer.getBounds(),{animate:false,padding:[6,6]});
+  map.setZoom(map.getZoom()+0.75);
 }
 
 function renderMap(){
@@ -918,7 +920,7 @@ function renderMap(){
   if(!window.L){ setTimeout(renderMap,150); return; }
   const L=window.L;
   if(leafletMap){ try{leafletMap.remove();}catch(_){} }
-  leafletMap=L.map(el,{scrollWheelZoom:false}).setView([-23.545,-46.53],12);
+  leafletMap=L.map(el,{scrollWheelZoom:false,zoomSnap:0.25}).setView([-23.545,-46.53],12);
 
   // The database's own lat/lng columns turned out to have only 13 distinct
   // points for 239 developments — several blending neighborhoods that are
