@@ -837,21 +837,27 @@ function renderMap(){
   leafletMap=L.map(el,{scrollWheelZoom:false}).setView([-23.545,-46.53],12);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(leafletMap);
 
-  // Many developments share the exact same geocoded point (neighborhood-level
-  // precision, not per-building), so plotting raw lat/lng stacks dozens of
-  // pins on the same pixel. Group by coordinate and spread each group into a
-  // small rosette so every development still gets its own visible, clickable pin.
+  // The database's own lat/lng columns turned out to have only 13 distinct
+  // points for 239 developments — several blending neighborhoods that are
+  // genuinely kilometers apart in real life (e.g. Mooca, Tatuapé, Brás,
+  // Belém and Alto da Mooca all shared one identical coordinate). We use a
+  // proper per-neighborhood coordinate table instead (geocoded against real
+  // São Paulo geography), then still spread developments that share a
+  // neighborhood into a small rosette so each stays individually visible
+  // and clickable.
   const groups={};
   EMPS.forEach(e=>{
-    if(e.lat==null||e.lng==null||isNaN(e.lat)||isNaN(e.lng)) return;
-    const key=e.lat.toFixed(5)+','+e.lng.toFixed(5);
-    (groups[key]=groups[key]||[]).push(e);
+    const name = e.bairroComercial || e.bairroRaw || e.bairro;
+    const coord = BAIRRO_COMERCIAL_COORDS[name];
+    if(!coord) return;
+    const key=name;
+    (groups[key]=groups[key]||{coord,items:[]}).items.push(e);
   });
 
-  Object.values(groups).forEach(group=>{
-    const n=group.length;
-    group.forEach((e,idx)=>{
-      let lat=e.lat, lng=e.lng;
+  Object.values(groups).forEach(({coord,items})=>{
+    const n=items.length;
+    items.forEach((e,idx)=>{
+      let [lat,lng]=coord;
       if(n>1){
         const r=0.0022+Math.floor(idx/8)*0.0022; // ring radius, extra rings if a spot has 8+
         const ang=(2*Math.PI*idx)/Math.min(n,8) + (Math.floor(idx/8)*0.4);
