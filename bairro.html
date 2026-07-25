@@ -117,7 +117,7 @@ function belongsToCanonical(e, targetId){
   return (BAIRRO_DB_NAMES[targetId]||[]).includes(e.bairro_comercial);
 }
 async function loadData(bairroId){
-  const emps=await sbFetch('empreendimentos',{select:'id,nome,bairro,bairro_comercial,status,mes_entrega',ativo:'eq.true',limit:'500'});
+  const emps=await sbFetch('empreendimentos',{select:'id,nome,bairro,bairro_comercial,status,mes_entrega,preco_min,area_min_m2',ativo:'eq.true',limit:'500'});
   const here=emps.filter(e=>belongsToCanonical(e, bairroId));
   if(!here.length) return {here:[], stats:{count:0}, listingBairro:null};
   // The listing page (empreendimentos.html) filters by bairro_comercial||bairro.
@@ -140,9 +140,11 @@ async function loadData(bairroId){
     const et=tipsBy[e.id]||[];
     const precos=et.map(t=>+t.preco_a_partir).filter(p=>p>0);
     const areas=et.map(t=>+t.area_m2).filter(a=>a>0);
+    const minPreco = precos.length?Math.min(...precos):(+e.preco_min||0);
+    const minArea = areas.length?Math.min(...areas):(+e.area_min_m2||0);
     return { id:e.id, nome:e.nome, status:STATUS_LABELS[e.status]||e.status||'—', entrega:e.mes_entrega||'A definir',
-      fachada:imgBy[e.id]||null, minPreco: precos.length?Math.min(...precos):0, minArea: areas.length?Math.min(...areas):0,
-      precoM2: (precos.length&&areas.length)? (precos.reduce((a,p,i)=>a+p/(areas[i]||areas[0]),0)/precos.length) : 0 };
+      fachada:imgBy[e.id]||null, minPreco, minArea,
+      precoM2: (precos.length&&areas.length)? (precos.reduce((a,p,i)=>a+p/(areas[i]||areas[0]),0)/precos.length) : (minPreco&&minArea? minPreco/minArea : 0) };
   });
   const allPrecos=enriched.map(e=>e.minPreco).filter(p=>p>0);
   const allM2=enriched.map(e=>e.precoM2).filter(p=>p>0);
