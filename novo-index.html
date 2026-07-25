@@ -459,10 +459,7 @@ function renderCarousel(){
   q('resultCountA').textContent=filteredFullCount();
 
   const cardsHtml = list.map((e,i)=>{
-    const min = e.tips.reduce((a,t)=>t.preco<a.preco?t:a, e.tips[0]);
-    const qmax=Math.max(...e.tips.map(t=>t.quartos)), qmin=Math.min(...e.tips.map(t=>t.quartos));
-    const qtxt = qmax===0?'Studio':(qmin===qmax?qmax+'q':qmin+'–'+qmax+'q');
-    const vagas=Math.max(...e.tips.map(t=>t.vagas));
+    const selIdx=state.sel[e.id]??0, t=e.tips[selIdx]||e.tips[0];
     const img = e.fachada || PLACEHOLDER_IMG;
     const badgeColor = STATUS_COLORS_MAP[e.status]||'#6B6F76';
     return `
@@ -470,18 +467,15 @@ function renderCarousel(){
       <div class="card-inner" style="position:relative;height:460px;border-radius:20px;overflow:hidden;background:var(--ph1);box-shadow:var(--shadow)">
         <img data-src="${esc(img)}" alt="${esc(e.nome)}" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;background:linear-gradient(135deg,var(--ph1),var(--ph2))">
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.28) 0%,rgba(0,0,0,0) 34%,rgba(0,0,0,.35) 60%,rgba(0,0,0,.85) 100%)"></div>
-        <span style="position:absolute;left:14px;top:14px;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;color:#fff;background:${badgeColor};box-shadow:0 2px 10px rgba(0,0,0,.35)">${esc(e.status)}</span>
+        <span style="position:absolute;left:14px;top:14px;padding:6px 14px;border-radius:999px;font-size:12.5px;font-weight:600;color:#fff;background:${badgeColor};box-shadow:0 2px 10px rgba(0,0,0,.35)">${esc(e.status)}</span>
+        <span style="position:absolute;right:14px;top:14px;padding:6px 14px;border-radius:999px;font-size:12.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px);white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis">${esc(e.bairro)}</span>
         <div style="position:absolute;left:0;right:0;bottom:0;padding:18px;color:#fff">
           <h3 style="font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.2;margin-bottom:6px;text-shadow:0 1px 6px rgba(0,0,0,.4)">${esc(e.nome)}</h3>
           <div style="display:flex;align-items:flex-start;gap:6px;font-size:12.5px;opacity:.9;margin-bottom:12px;min-height:32px"><span style="color:var(--gold);flex-shrink:0" class="msi">location_on</span><span style="text-shadow:0 1px 4px rgba(0,0,0,.5)">${esc(e.endereco)}</span></div>
-          <div style="font-size:11.5px;opacity:.8">A partir de</div>
-          <div style="font-size:23px;font-weight:600;letter-spacing:-.01em;margin-bottom:12px;text-shadow:0 1px 6px rgba(0,0,0,.5)">${fmt(min.preco)}</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(6px);font-size:12px;font-weight:500;color:#fff">${MSI('bed',13)} ${qtxt}</span>
-            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(6px);font-size:12px;font-weight:500;color:#fff">${MSI('directions_car',13)} ${vagas} vaga(s)</span>
-            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(6px);font-size:12px;font-weight:500;color:#fff">${MSI('straighten',13)} ${min.area} m²</span>
-          </div>
-          <button data-act="openEmp" data-id="${e.id}" class="btn-white" style="width:100%;height:44px;border-radius:11px;border:none;background:#fff;color:#111;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer">Ver mais</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${tipsPillsHtml(e,selIdx,i)}</div>
+          <div style="opacity:.8;font-size:12px">A partir de · ${t.area} m²</div>
+          <div style="font-size:23px;font-weight:600;letter-spacing:-.01em">${fmt(t.preco)}</div>
+          <div class="cta-slot"></div>
         </div>
       </div>
     </div>`;
@@ -896,11 +890,11 @@ async function loadMapDistricts(map, withEmpSet){
   const wanted=new Set(zlDistritos.map(d=>normDistrito(d)));
   let feats=null;
   try{
-    const res=await fetch('https://raw.githubusercontent.com/codigourbano/distritos-sp/master/distritos-sp.geojson');
+    const res=await fetch('assets/zl-distritos.geojson.json');
     const gj=await res.json();
     feats=(gj.features||[]).filter(f=>wanted.has(normDistrito((f.properties||{}).ds_nome)))
       .map(f=>({...f, properties:{...f.properties, __nome:f.properties.ds_nome}}));
-  }catch(_){ feats=null; }
+  }catch(err){ console.error('districts load failed',err); feats=null; }
   const L=window.L;
   if(!feats||!feats.length){
     L.polygon(zlShapeFallback,{color:'#fff',weight:2,fillColor:'#F0EEE9',fillOpacity:1}).addTo(map);
