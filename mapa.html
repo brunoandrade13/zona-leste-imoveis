@@ -88,6 +88,10 @@
           <span style="font-size:13px;font-weight:600;color:var(--text)"><span id="visibleCount" style="color:var(--red)">—</span> de <span id="totalCount">—</span> visíveis</span>
           <button data-act="resetView" style="font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline">ver toda a região</button>
         </div>
+        <button data-act="openFilters" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:42px;margin-top:12px;border-radius:11px;border:1px solid var(--card-brd);background:var(--card);color:var(--text);font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer">
+          <span class="msi" style="font-size:18px">tune</span> Filtros
+          <span id="filterCountBadge" style="display:none;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:11.5px;font-weight:600;align-items:center;justify-content:center"></span>
+        </button>
       </div>
       <div id="listRoot" class="zl-list" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0"></div>
     </aside>
@@ -100,6 +104,8 @@
     </div>
   </div>
 </div>
+
+<div id="panelRoot"></div>
 
 <script>
 "use strict";
@@ -136,7 +142,8 @@ const palette = ['#E8CFCB','#EFE0BE','#E4D2C2','#E0D3CE','#C9D6E0','#DFCFD8','#E
 const paletteDark = ['#5A4442','#5C5340','#564742','#4B4245','#3F4A55','#514250','#5A4A3C','#464054','#3F4A50','#564439','#464158','#5A5140'];
 
 let EMPS=[];
-const state={ theme:'light', hoverId:null };
+const state={ theme:'light', hoverId:null, panelOpen:false, panelExpanded:null,
+  filters:{ status:'', bairro:'', quartos:'', faixa:'' } };
 let map=null, markers={}, distrLayer=null, zlBounds=null;
 
 function distritoFill(name, dark, withEmpSet){
@@ -194,12 +201,14 @@ async function loadAll(){
     // every other page on the site already does.
     const precoFinal = precos.length?Math.min(...precos):(+e.preco_min||0);
     const areaFinal = areas.length?Math.min(...areas):(+e.area_min_m2||0);
+    const qmin = qs.length ? Math.min(...qs) : (e.tipo_min_quartos!=null?e.tipo_min_quartos:null);
     const item={
-      id:e.id, nome:e.nome, bairro:name, status:STATUS_LABELS[e.status]||e.status||'—',
+      id:e.id, nome:e.nome, bairro:name, status:STATUS_LABELS[e.status]||e.status||'—', statusRaw:e.status,
       incorporadora:e.incorporadora||'—', entrega:e.mes_entrega||'A definir',
       fachada:imgBy[e.id]||PLACEHOLDER_IMG,
       preco: precoFinal,
       area: areaFinal,
+      qmin,
       quartos: qs.length?(Math.min(...qs)===Math.max(...qs)?(Math.min(...qs)===0?'Studio':Math.min(...qs)+'q'):(Math.min(...qs)===0?'Studio':Math.min(...qs))+'–'+Math.max(...qs)+'q'):(e.tipo_min_quartos!=null?(e.tipo_min_quartos===0?'Studio':e.tipo_min_quartos+'q'):'—'),
       vagas: vs.length? ('até '+Math.max(...vs)+' vaga(s)') : 'sem vaga',
       dif: difs.slice(0,2).join(' · ') || '—',
@@ -377,6 +386,60 @@ function initMap(){
   setTimeout(()=>{ try{map.invalidateSize();}catch(_){} fitAll(false); syncList(); },300);
 }
 
+function mapBairroList(){ return [...new Set(EMPS.map(e=>e.bairro))].sort(); }
+function updateFilterBadge(){
+  const n=activeFilterCount();
+  const badge=q('filterCountBadge');
+  if(!badge) return;
+  if(n){ badge.textContent=n; badge.style.display='inline-flex'; }
+  else { badge.style.display='none'; }
+}
+function mapPillHtml(key,label,value,active){
+  return `<button data-act="pickFilter" data-filter-key="${key}" data-filter-val="${esc(value)}" style="font-family:inherit;font-size:13.5px;font-weight:500;padding:8px 14px;border-radius:999px;cursor:pointer;border:1px solid ${active?'var(--red)':'var(--card-brd)'};background:${active?'var(--red)':'var(--card)'};color:${active?'#fff':'var(--text)'}">${esc(label)}</button>`;
+}
+function renderFilterPanel(){
+  if(!state.panelOpen){ q('panelRoot').innerHTML=''; return; }
+  const f=state.filters, bairros=mapBairroList();
+  const groups=[
+    {name:'Quartos', key:'quartos', opts:[{label:'Qualquer',v:''},{label:'1 quarto',v:'1'},{label:'2 quartos',v:'2'},{label:'3+ quartos',v:'3'}]},
+    {name:'Faixa de preço', key:'faixa', opts:[{label:'Qualquer',v:''},{label:'até R$ 500 mil',v:'a'},{label:'R$ 500–800 mil',v:'b'},{label:'R$ 800 mil–1,2 mi',v:'c'},{label:'acima de R$ 1,2 mi',v:'d'}]},
+    {name:'Status da obra', key:'status', opts:[{label:'Todos',v:''},...Object.values(STATUS_LABELS).filter((v,i,a)=>a.indexOf(v)===i).map(v=>({label:v,v}))]},
+  ];
+  const bairroExpanded=state.panelExpanded==='bairro';
+  const visible=EMPS.filter(passesFilter).length;
+  q('panelRoot').innerHTML=`
+    <div data-act="closeFilters" style="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div data-act="noop" style="width:min(440px,100%);max-height:86vh;overflow-y:auto;border-radius:20px;background:var(--bg);box-shadow:0 40px 90px rgba(0,0,0,.4)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--card-brd);position:sticky;top:0;background:var(--bg);z-index:2">
+          <span style="font-size:18px;font-weight:600">Filtros</span>
+          <button data-act="closeFilters" style="width:34px;height:34px;border-radius:999px;border:1px solid var(--card-brd);background:var(--card);color:var(--text);cursor:pointer;font-size:15px">✕</button>
+        </div>
+        <div style="padding:22px;display:flex;flex-direction:column;gap:22px">
+          ${groups.map(g=>`
+            <div>
+              <div style="font-size:12.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">${esc(g.name)}</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">${g.opts.map(o=>mapPillHtml(g.key,o.label,o.v,f[g.key]===o.v)).join('')}</div>
+            </div>`).join('')}
+          <div>
+            <div style="font-size:12.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Bairro</div>
+            <button data-act="togglePanelGroup" data-filter-key="bairro" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;font-family:inherit;font-size:14px;font-weight:500;padding:11px 14px;border-radius:11px;cursor:pointer;border:1px solid ${f.bairro?'var(--red)':'var(--card-brd)'};background:var(--card);color:var(--text)">
+              <span>${esc(f.bairro||'Todos os bairros')}</span>
+              <span style="transition:transform .2s;transform:${bairroExpanded?'rotate(180deg)':'rotate(0)'};color:var(--muted)">▾</span>
+            </button>
+            ${bairroExpanded?`<div style="margin-top:8px;max-height:220px;overflow-y:auto;border:1px solid var(--card-brd);border-radius:11px;padding:6px">
+              <button data-act="pickFilter" data-filter-key="bairro" data-filter-val="" style="display:block;width:100%;text-align:left;font-family:inherit;font-size:13.5px;font-weight:500;padding:9px 10px;border-radius:8px;border:none;cursor:pointer;background:${!f.bairro?'var(--surface)':'transparent'};color:var(--text)">Todos os bairros</button>
+              ${bairros.map(b=>`<button data-act="pickFilter" data-filter-key="bairro" data-filter-val="${esc(b)}" style="display:block;width:100%;text-align:left;font-family:inherit;font-size:13.5px;font-weight:500;padding:9px 10px;border-radius:8px;border:none;cursor:pointer;background:${f.bairro===b?'var(--surface)':'transparent'};color:var(--text)">${esc(b)}</button>`).join('')}
+            </div>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;padding:16px 22px;border-top:1px solid var(--card-brd);position:sticky;bottom:0;background:var(--bg)">
+          <button data-act="clearFilters" style="flex:1;height:46px;border-radius:11px;border:1px solid var(--card-brd);background:transparent;color:var(--text);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer">Limpar</button>
+          <button data-act="closeFilters" style="flex:2;height:46px;border-radius:11px;border:none;background:var(--red);color:#fff;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer">Ver ${visible} resultados</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 function renderCard(e){
   const active=state.hoverId===e.id;
   return `<div class="ecard ${active?'active':''}" data-id="${e.id}" data-act="cardHover" style="position:relative;height:250px;flex-shrink:0;border-radius:16px;overflow:hidden;cursor:pointer;background:var(--ph1);border:1px solid var(--card-brd)">
@@ -401,10 +464,43 @@ function renderCard(e){
   </div>`;
 }
 
+function passesFilter(e){
+  const f=state.filters;
+  if(f.status && e.status!==f.status) return false;
+  if(f.bairro && e.bairro!==f.bairro) return false;
+  if(f.quartos){
+    if(e.qmin==null) return false;
+    if(f.quartos==='3'){ if(e.qmin<3) return false; }
+    else if(e.qmin!==+f.quartos) return false;
+  }
+  if(f.faixa){
+    const p=e.preco;
+    if(f.faixa==='a' && p>=500000) return false;
+    if(f.faixa==='b' && (p<500000||p>=800000)) return false;
+    if(f.faixa==='c' && (p<800000||p>=1200000)) return false;
+    if(f.faixa==='d' && p<1200000) return false;
+  }
+  return true;
+}
+function applyFilterVisibility(){
+  if(!map) return;
+  EMPS.forEach(e=>{
+    const m=markers[e.id];
+    if(!m) return;
+    const ok=passesFilter(e);
+    if(ok){ if(!map.hasLayer(m)) m.addTo(map); }
+    else { if(map.hasLayer(m)) map.removeLayer(m); }
+  });
+}
+function activeFilterCount(){
+  const f=state.filters;
+  return ['status','bairro','quartos','faixa'].filter(k=>f[k]).length;
+}
+
 function syncList(){
   if(!map) return;
   const b=map.getBounds();
-  const visible=EMPS.filter(e=>b.contains(window.L.latLng(e.lat,e.lng))).sort((a,c)=>a.preco-c.preco);
+  const visible=EMPS.filter(e=>b.contains(window.L.latLng(e.lat,e.lng)) && passesFilter(e)).sort((a,c)=>a.preco-c.preco);
   q('visibleCount').textContent=visible.length;
   q('totalCount').textContent=EMPS.length;
   if(!visible.length){
@@ -431,6 +527,19 @@ const ACTIONS={
   },
   resetView(){ resetView(); },
   cardHover(t){ hoverFromList(t.dataset.id, true); t.scrollIntoView && t.scrollIntoView({block:'nearest'}); },
+  openFilters(){ state.panelOpen=true; state.panelExpanded=null; renderFilterPanel(); },
+  closeFilters(){ state.panelOpen=false; renderFilterPanel(); },
+  togglePanelGroup(t){ const key=t.dataset.filterKey; state.panelExpanded = state.panelExpanded===key?null:key; renderFilterPanel(); },
+  pickFilter(t){
+    const key=t.dataset.filterKey, val=t.dataset.filterVal;
+    state.filters={...state.filters,[key]:val}; state.panelExpanded=null;
+    applyFilterVisibility(); syncList(); renderFilterPanel(); updateFilterBadge();
+  },
+  clearFilters(){
+    state.filters={status:'',bairro:'',quartos:'',faixa:''}; state.panelExpanded=null;
+    applyFilterVisibility(); syncList(); renderFilterPanel(); updateFilterBadge();
+  },
+  noop(){},
 };
 document.addEventListener('click', e=>{
   const t=e.target.closest('[data-act]');
