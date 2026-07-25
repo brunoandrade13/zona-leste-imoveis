@@ -938,10 +938,22 @@ function renderMap(){
   });
 
   const withEmpSet=new Set();
-  loadMapDistricts(leafletMap, withEmpSet);
+  Object.entries(groups).forEach(([name])=>{ withEmpSet.add(normDistrito(name)); });
+
+  // The district shapes are drawn with an SVG layer whose internal size is
+  // fixed at the moment it's created. If the map container hasn't settled
+  // into its final CSS-computed size yet (very possible this far down a long
+  // page), that SVG collapses to 0×0 and the shapes never appear — even
+  // though the tiny points still render fine (different rendering path).
+  // Force a size re-check first, then only add the district layer once the
+  // container is confirmably sized.
+  requestAnimationFrame(()=>{
+    try{ leafletMap.invalidateSize(); }catch(_){}
+    if(el.clientHeight>0){ loadMapDistricts(leafletMap, withEmpSet); }
+    else { setTimeout(()=>{ try{leafletMap.invalidateSize();}catch(_){} loadMapDistricts(leafletMap, withEmpSet); }, 300); }
+  });
 
   Object.values(groups).forEach(({coord,items})=>{
-    withEmpSet.add(normDistrito(items[0].bairroComercial||items[0].bairroRaw||items[0].bairro));
     const n=items.length;
     items.forEach((e,idx)=>{
       let [lat,lng]=coord;
