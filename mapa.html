@@ -149,7 +149,7 @@ function distritoFill(name, dark, withEmpSet){
 
 async function loadAll(){
   const [emps,tips,imgs] = await Promise.all([
-    sbFetch('empreendimentos',{select:'id,nome,bairro,bairro_comercial,status,mes_entrega,incorporadora,diferenciais_apto',ativo:'eq.true',limit:'500'}),
+    sbFetch('empreendimentos',{select:'id,nome,bairro,bairro_comercial,status,mes_entrega,incorporadora,diferenciais_apto,preco_min,area_min_m2,tipo_min_quartos',ativo:'eq.true',limit:'500'}),
     sbFetch('empreendimento_tipologias',{select:'empreendimento_id,area_m2,quartos,vagas,preco_a_partir',ativo:'eq.true',limit:'3000'}),
     sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,tipo,ordem',ativo:'eq.true',tipo:'eq.fachada',order:'empreendimento_id,ordem',limit:'2000'}),
   ]);
@@ -172,13 +172,19 @@ async function loadAll(){
     const qs=et.map(t=>t.quartos);
     const vs=et.map(t=>t.vagas).filter(v=>v>0);
     const difs=(e.diferenciais_apto||'').split(',').map(s=>s.trim()).filter(Boolean);
+    // Some developments have active tipologia rows but none with a filled-in
+    // price (the price only exists on an older/inactive row) — fall back to
+    // the development-level preco_min/area_min_m2 in that case, same as
+    // every other page on the site already does.
+    const precoFinal = precos.length?Math.min(...precos):(+e.preco_min||0);
+    const areaFinal = areas.length?Math.min(...areas):(+e.area_min_m2||0);
     const item={
       id:e.id, nome:e.nome, bairro:name, status:STATUS_LABELS[e.status]||e.status||'—',
       incorporadora:e.incorporadora||'—', entrega:e.mes_entrega||'A definir',
       fachada:imgBy[e.id]||PLACEHOLDER_IMG,
-      preco: precos.length?Math.min(...precos):0,
-      area: areas.length?Math.min(...areas):0,
-      quartos: qs.length?(Math.min(...qs)===Math.max(...qs)?(Math.min(...qs)===0?'Studio':Math.min(...qs)+'q'):(Math.min(...qs)===0?'Studio':Math.min(...qs))+'–'+Math.max(...qs)+'q'):'—',
+      preco: precoFinal,
+      area: areaFinal,
+      quartos: qs.length?(Math.min(...qs)===Math.max(...qs)?(Math.min(...qs)===0?'Studio':Math.min(...qs)+'q'):(Math.min(...qs)===0?'Studio':Math.min(...qs))+'–'+Math.max(...qs)+'q'):(e.tipo_min_quartos!=null?(e.tipo_min_quartos===0?'Studio':e.tipo_min_quartos+'q'):'—'),
       vagas: vs.length? ('até '+Math.max(...vs)+' vaga(s)') : 'sem vaga',
       dif: difs.slice(0,2).join(' · ') || '—',
       lat:coord[0], lng:coord[1],
@@ -331,8 +337,12 @@ async function loadDistricts(){
 function initMap(){
   const L=window.L;
   map=L.map(q('mapEl'),{zoomControl:true,scrollWheelZoom:true,maxZoom:18,attributionControl:false,zoomSnap:.25}).setView([-23.545,-46.53],12);
-  requestAnimationFrame(()=>{ try{map.invalidateSize();}catch(_){} });
-  loadDistricts();
+  const mapEl=q('mapEl');
+  requestAnimationFrame(()=>{
+    try{ map.invalidateSize(); }catch(_){}
+    if(mapEl.clientHeight>0){ loadDistricts(); }
+    else { setTimeout(()=>{ try{map.invalidateSize();}catch(_){} loadDistricts(); }, 300); }
+  });
   markers={};
   EMPS.forEach(e=>{
     const marker=L.marker([e.lat,e.lng],{icon:makeIcon(e,false)}).addTo(map);
