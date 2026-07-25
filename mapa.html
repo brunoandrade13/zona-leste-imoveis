@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa dos empreendimentos — Zona Leste Lançamentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="bairros-data.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'General Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  :root{
+    --bg:#FFFFFF;--text:#111111;--muted:#6B6F76;--red:#9E1B1B;--gold:#C9A227;
+    --glass:rgba(255,255,255,.65);--glass-brd:rgba(17,17,17,.08);
+    --card:#FFFFFF;--card-brd:rgba(17,17,17,.09);--surface:#F6F6F4;
+    --shadow:0 12px 40px rgba(17,17,17,.10);--ph1:#EDEBE6;
+  }
+  [data-theme="dark"]{
+    --bg:#0B0D10;--text:#FFFFFF;--muted:#A8ACB3;
+    --glass:rgba(16,19,24,.55);--glass-brd:rgba(255,255,255,.12);
+    --card:#12151A;--card-brd:rgba(255,255,255,.10);--surface:#111418;
+    --shadow:0 16px 44px rgba(0,0,0,.55);--ph1:#1A1E24;
+  }
+  a{color:var(--red);text-decoration:none}
+  a:hover{color:var(--gold)}
+  .serif{font-family:'Newsreader',Georgia,serif;font-style:italic;font-weight:500}
+  .msi{font-family:'Material Symbols Outlined';font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;font-size:18px;line-height:1;vertical-align:-3px;display:inline-block;font-style:normal;letter-spacing:normal;text-transform:none;white-space:nowrap;word-wrap:normal;direction:ltr}
+  .hoverop:hover{opacity:1 !important;background:var(--surface)}
+  .hovertheme:hover{filter:brightness(1.08)}
+  .hoverlogin:hover{background:var(--gold) !important;color:#111 !important}
+  .hoverlogin:hover .arrow{transform:translateX(3px)}
+  .leaflet-popup-content-wrapper{background:transparent;box-shadow:none;padding:0;border-radius:16px}
+  .leaflet-popup-content{margin:0;width:auto !important}
+  .leaflet-popup-tip-container{display:none}
+  .leaflet-popup{margin-bottom:0}
+  .leaflet-popup-close-button{display:none}
+  .leaflet-container{background:radial-gradient(120% 100% at 50% 0%,#FFFFFF 0%,#F2F1EE 55%,#E7E5E1 100%) !important}
+  [data-theme="dark"] .leaflet-container{background:radial-gradient(120% 100% at 50% 0%,#14181E 0%,#0E1116 60%,#080A0D 100%) !important}
+  .leaflet-overlay-pane svg{filter:drop-shadow(0 18px 22px rgba(17,17,17,.22))}
+  .leaflet-overlay-pane path{filter:drop-shadow(0 3px 2.5px rgba(60,45,40,.34)) drop-shadow(0 1px 0 rgba(255,255,255,.5));transition:stroke-width .2s ease,filter .2s ease}
+  .zl-label{background:transparent !important;border:none !important;box-shadow:none !important;padding:0 !important;
+    font:600 10.5px/1.1 'General Sans',sans-serif !important;color:#433B33 !important;text-transform:uppercase;letter-spacing:.04em;text-shadow:0 1px 2px rgba(255,255,255,.85)}
+  .zl-label::before{display:none !important}
+  [data-theme="dark"] .zl-label{color:#EDE8E2 !important;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+  .zl-list::-webkit-scrollbar{width:8px}
+  .zl-list::-webkit-scrollbar-thumb{background:rgba(120,120,120,.35);border-radius:99px}
+  .ecard{transition:transform .25s,box-shadow .25s,border-color .25s}
+  .ecard:hover, .ecard.active{transform:translateY(-3px);box-shadow:0 22px 44px -16px rgba(17,17,17,.5);border-color:var(--red) !important}
+  #loadOverlay{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+
+<div id="loadOverlay">Carregando mapa…</div>
+
+<div id="root" data-theme="light" style="height:100vh;background:var(--bg);color:var(--text);display:none;flex-direction:column;overflow:hidden">
+
+  <header style="flex-shrink:0;z-index:60;padding:16px 20px;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+    <div style="display:flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:8px 8px 8px 16px;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.12)">
+      <a href="novo-index.html" style="display:flex;align-items:center;gap:9px;padding-right:6px">
+        <span style="width:30px;height:30px;border-radius:8px;background:var(--red);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px">ZL</span>
+        <span style="font-weight:600;font-size:15.5px;letter-spacing:-.01em;white-space:nowrap;color:var(--text)">Zona Leste</span>
+      </a>
+      <nav style="display:flex;align-items:center;gap:2px">
+        <a href="empreendimentos.html" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Empreendimentos</a>
+        <a href="bairros.html" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Bairros</a>
+        <a href="mapa.html" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:600;color:var(--red);white-space:nowrap;background:var(--surface)">Mapa</a>
+        <a href="novo-index.html#numeros" class="hoverop" style="padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500;color:var(--text);opacity:.82;white-space:nowrap">Faça sua simulação</a>
+      </nav>
+      <button id="themeBtn" data-act="toggleTheme" title="Alternar tema" class="hovertheme" style="width:38px;height:38px;border-radius:999px;border:none;background:var(--surface);cursor:pointer;color:var(--text);display:grid;place-items:center;font-size:15px;flex-shrink:0">☾</button>
+      <button class="hoverlogin" style="height:38px;padding:0 18px;border-radius:999px;border:none;background:var(--red);cursor:pointer;color:#fff;font-family:inherit;font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;white-space:nowrap"><span>Entrar</span><span class="arrow" style="transition:transform .25s">→</span></button>
+    </div>
+  </header>
+
+  <div style="flex:1;display:grid;grid-template-columns:400px 1fr;min-height:0">
+    <aside style="border-right:1px solid var(--card-brd);display:flex;flex-direction:column;min-height:0;background:var(--bg)">
+      <div style="padding:20px 20px 14px;border-bottom:1px solid var(--card-brd);flex-shrink:0">
+        <h1 style="font-size:22px;font-weight:600;letter-spacing:-.02em;margin-bottom:4px">Empreendimentos <span class="serif" style="color:var(--red)">no mapa</span></h1>
+        <p style="color:var(--muted);font-size:13px;line-height:1.45">Dê zoom ou arraste o mapa — a lista mostra apenas o que está visível na tela.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px">
+          <span style="font-size:13px;font-weight:600;color:var(--text)"><span id="visibleCount" style="color:var(--red)">—</span> de <span id="totalCount">—</span> visíveis</span>
+          <button data-act="resetView" style="font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline">ver toda a região</button>
+        </div>
+      </div>
+      <div id="listRoot" class="zl-list" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0"></div>
+    </aside>
+
+    <div style="position:relative;min-height:0">
+      <div id="mapEl" style="position:absolute;inset:0;background:var(--surface);z-index:0"></div>
+      <div style="position:absolute;left:16px;bottom:16px;z-index:400;display:flex;gap:8px;align-items:center;padding:8px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(12px);font-size:12.5px;color:var(--text);box-shadow:var(--shadow)">
+        <span style="width:9px;height:9px;border-radius:99px;background:var(--red)"></span> Passe o mouse num ponto para ver o card
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const SB='https://xmnggeptpwxsmcartyzt.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtbmdnZXB0cHd4c21jYXJ0eXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NjkzMzIsImV4cCI6MjA5NzE0NTMzMn0.2HWGvTAuEuzEHXcEbOr9t0gC1yc765lxQxk080EDmfg';
+const H={apikey:KEY,Authorization:`Bearer ${KEY}`};
+const STATUS_LABELS={lancamento:'Lançamento',na_planta:'Na planta',pronto:'Pronto p/ morar',breve_lancamento:'Breve lançamento',em_construcao:'Em construção'};
+const q=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MSI=(name,size=18,cls='')=>`<span class="msi ${cls}" style="font-size:${size}px">${name}</span>`;
+const PLACEHOLDER_IMG='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="%23EDEBE6"/></svg>');
+function fmtK(n){ return n>=1000000 ? 'R$ '+(n/1000000).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi' : 'R$ '+Math.round(n/1000)+' mil'; }
+function statusColor(s){ return {'Lançamento':'#C9A227','Breve lançamento':'#C9A227','Em construção':'#3B5B8C','Na planta':'#7A4C6B','Pronto p/ morar':'#4C7A5B'}[s] || '#6B6F76'; }
+
+async function sbFetch(path,params={}){
+  const u=new URL(`${SB}/rest/v1/${path}`);
+  for(const[k,v]of Object.entries(params))u.searchParams.set(k,v);
+  const r=await fetch(u,{headers:{...H,'Range':'0-9999'}});
+  return r.json();
+}
+
+// Zona Leste rough outline (fallback if the districts GeoJSON fails to load)
+const zlShape = [
+  [-23.5450,-46.6100],[-23.5300,-46.6040],[-23.5180,-46.5960],[-23.5085,-46.5700],
+  [-23.5010,-46.5400],[-23.4955,-46.5100],[-23.4905,-46.4700],[-23.4870,-46.4400],
+  [-23.4895,-46.4100],[-23.4980,-46.3900],[-23.5200,-46.3700],[-23.5450,-46.3600],
+  [-23.5700,-46.3650],[-23.5900,-46.3850],[-23.6050,-46.4100],[-23.6150,-46.4400],
+  [-23.6200,-46.4700],[-23.6120,-46.5000],[-23.6000,-46.5300],[-23.5850,-46.5600],
+  [-23.5700,-46.5850],[-23.5560,-46.6000],
+];
+const zlDistritos = ['Agua Rasa','Aricanduva','Artur Alvim','Belem','Bras','Cangaiba','Carrao','Cidade Lider','Cidade Tiradentes','Ermelino Matarazzo','Guaianases','Iguatemi','Itaim Paulista','Itaquera','Jardim Helena','Jose Bonifacio','Lajeado','Mooca','Pari','Parque do Carmo','Penha','Ponte Rasa','Sao Lucas','Sao Mateus','Sao Miguel','Sao Rafael','Sapopemba','Tatuape','Vila Curuca','Vila Formosa','Vila Jacui','Vila Matilde','Vila Prudente','Ipiranga','Sacoma'];
+function norm(s){ return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase(); }
+const palette = ['#E8CFCB','#EFE0BE','#E4D2C2','#E0D3CE','#C9D6E0','#DFCFD8','#EBD7C4','#DCD3E2','#CBD8DC','#E7D3C6','#D6CFE0','#EEE2C7'];
+const paletteDark = ['#5A4442','#5C5340','#564742','#4B4245','#3F4A55','#514250','#5A4A3C','#464054','#3F4A50','#564439','#464158','#5A5140'];
+
+let EMPS=[];
+const state={ theme:'light', hoverId:null };
+let map=null, markers={}, distrLayer=null, zlBounds=null;
+
+function distritoFill(name, dark, withEmpSet){
+  const n=norm(name);
+  if(withEmpSet.has(n)) return dark ? '#7A3330' : '#D9AFAB';
+  let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))>>>0;
+  const pal = dark ? paletteDark : palette;
+  return pal[h % pal.length];
+}
+
+async function loadAll(){
+  const [emps,tips,imgs] = await Promise.all([
+    sbFetch('empreendimentos',{select:'id,nome,bairro,bairro_comercial,status,mes_entrega,incorporadora,diferenciais_apto',ativo:'eq.true',limit:'500'}),
+    sbFetch('empreendimento_tipologias',{select:'empreendimento_id,area_m2,quartos,vagas,preco_a_partir',ativo:'eq.true',limit:'3000'}),
+    sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,tipo,ordem',ativo:'eq.true',tipo:'eq.fachada',order:'empreendimento_id,ordem',limit:'2000'}),
+  ]);
+  const tipsBy={}, imgBy={};
+  tips.forEach(t=>{ (tipsBy[t.empreendimento_id]=tipsBy[t.empreendimento_id]||[]).push(t); });
+  imgs.forEach(i=>{ if(!imgBy[i.empreendimento_id]) imgBy[i.empreendimento_id]=i.url; });
+
+  // group by resolved neighborhood coordinate so we can spread developments
+  // that share the same neighborhood into a small rosette (same fix as the
+  // home page map — see BAIRRO_COMERCIAL_COORDS in bairros-data.js)
+  const groups={};
+  const list=[];
+  emps.forEach(e=>{
+    const name = e.bairro_comercial || e.bairro;
+    const coord = BAIRRO_COMERCIAL_COORDS[e.bairro] || BAIRRO_COMERCIAL_COORDS[e.bairro_comercial];
+    if(!coord) return;
+    const et=tipsBy[e.id]||[];
+    const precos=et.map(t=>+t.preco_a_partir).filter(p=>p>0);
+    const areas=et.map(t=>+t.area_m2).filter(a=>a>0);
+    const qs=et.map(t=>t.quartos);
+    const vs=et.map(t=>t.vagas).filter(v=>v>0);
+    const difs=(e.diferenciais_apto||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const item={
+      id:e.id, nome:e.nome, bairro:name, status:STATUS_LABELS[e.status]||e.status||'—',
+      incorporadora:e.incorporadora||'—', entrega:e.mes_entrega||'A definir',
+      fachada:imgBy[e.id]||PLACEHOLDER_IMG,
+      preco: precos.length?Math.min(...precos):0,
+      area: areas.length?Math.min(...areas):0,
+      quartos: qs.length?(Math.min(...qs)===Math.max(...qs)?(Math.min(...qs)===0?'Studio':Math.min(...qs)+'q'):(Math.min(...qs)===0?'Studio':Math.min(...qs))+'–'+Math.max(...qs)+'q'):'—',
+      vagas: vs.length? ('até '+Math.max(...vs)+' vaga(s)') : 'sem vaga',
+      dif: difs.slice(0,2).join(' · ') || '—',
+      lat:coord[0], lng:coord[1],
+    };
+    const key=name;
+    (groups[key]=groups[key]||[]).push(item);
+    list.push(item);
+  });
+  Object.values(groups).forEach(group=>{
+    const n=group.length;
+    group.forEach((e,idx)=>{
+      if(n>1){
+        const r=0.0022+Math.floor(idx/8)*0.0022;
+        const ang=(2*Math.PI*idx)/Math.min(n,8) + (Math.floor(idx/8)*0.4);
+        e.lat+=Math.sin(ang)*r; e.lng+=Math.cos(ang)*r*1.25;
+      }
+    });
+  });
+  return list;
+}
+
+function makeIcon(e, active){
+  const c=statusColor(e.status);
+  let html;
+  if(active){
+    html = '<div style="transform:translate(-50%,-100%);transform-origin:bottom center;display:flex;flex-direction:column;align-items:center">'
+      + '<div style="background:#9E1B1B;color:#fff;font:600 12px/1 sans-serif;padding:6px 10px;border-radius:9px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.4);border:1.5px solid #fff;display:flex;align-items:center;gap:6px">'
+      + '<span style="width:7px;height:7px;border-radius:50%;background:#fff;flex-shrink:0"></span>' + fmtK(e.preco) + '</div>'
+      + '<div style="width:2px;height:9px;background:#9E1B1B"></div></div>';
+  } else {
+    html = '<div style="transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:'+c+';border:2.5px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.35)"></div>';
+  }
+  return window.L.divIcon({ className:'', iconSize:[0,0], html });
+}
+
+function popupHtml(e){
+  const c=statusColor(e.status);
+  const chip=t=>`<span style="padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(6px);font-size:11px;font-weight:500;color:#fff;white-space:nowrap">${t}</span>`;
+  return `<div style="position:relative;width:288px;height:290px;border-radius:16px;overflow:hidden;background:#EDEBE6;box-shadow:0 22px 50px rgba(0,0,0,.4);font-family:'General Sans',sans-serif">
+    <img src="${esc(e.fachada)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.02) 28%,rgba(0,0,0,.42) 56%,rgba(0,0,0,.92) 100%)"></div>
+    <span style="position:absolute;left:12px;top:12px;padding:5px 11px;border-radius:999px;background:${c};color:#fff;font-size:11px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3)">${esc(e.status)}</span>
+    <span style="position:absolute;right:12px;top:12px;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.26);backdrop-filter:blur(6px);color:#fff;font-size:11px;font-weight:600;white-space:nowrap">${esc(e.entrega)}</span>
+    <div style="position:absolute;left:0;right:0;bottom:0;padding:16px;color:#fff">
+      <div style="font-size:11.5px;font-weight:500;opacity:.9;margin-bottom:4px;text-shadow:0 1px 4px rgba(0,0,0,.5)">${esc(e.incorporadora)} · ${esc(e.bairro)}</div>
+      <div style="font-size:17px;font-weight:600;letter-spacing:-.01em;line-height:1.18;margin-bottom:10px;text-shadow:0 1px 6px rgba(0,0,0,.5)">${esc(e.nome)}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px">
+        ${chip(MSI('bed',12)+' '+esc(e.quartos))} ${chip(MSI('straighten',12)+' '+e.area+' m²')} ${chip(MSI('directions_car',12)+' '+esc(e.vagas))}
+      </div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px">
+        <div><div style="font-size:10.5px;opacity:.8">A partir de</div>
+        <div style="font-size:20px;font-weight:600;letter-spacing:-.01em;text-shadow:0 1px 6px rgba(0,0,0,.5)">${fmtK(e.preco)}</div></div>
+        <span style="font-size:11px;opacity:.85;text-align:right;line-height:1.3;max-width:120px">${esc(e.dif)}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function placePopup(marker,e){
+  if(!map) return;
+  const pop=marker.getPopup(); if(!pop) return;
+  const L=window.L, Hh=290, W=288, pad=10;
+  const pt=map.latLngToContainerPoint([e.lat,e.lng]);
+  const size=map.getSize();
+  const top=Math.min(Math.max(pt.y-Hh-16,pad), Math.max(size.y-Hh-pad,pad));
+  const left=Math.min(Math.max(pt.x-W/2,pad), Math.max(size.x-W-pad,pad));
+  pop.setContent(popupHtml(e));
+  pop.options.offset=L.point((left+W/2)-pt.x,(top+Hh)-pt.y);
+  if(pop._container) pop.update();
+}
+
+function setHover(id){
+  const old=state.hoverId;
+  if(old===id) return;
+  state.hoverId=id;
+  [old,id].forEach(i=>{
+    if(i==null) return;
+    const e=EMPS.find(x=>x.id===i), m=markers[i];
+    if(e&&m) m.setIcon(makeIcon(e, i===id));
+  });
+  document.querySelectorAll('.ecard').forEach(el=>{
+    el.classList.toggle('active', el.dataset.id===id);
+  });
+}
+function hoverFromList(id,on){
+  setHover(on?id:null);
+  const m=markers[id];
+  if(m){ if(on){ placePopup(m,EMPS.find(x=>x.id===id)); m.openPopup(); } else m.closePopup(); }
+}
+
+function fitAll(animate){
+  if(!map||!zlBounds) return;
+  map.fitBounds(zlBounds,{animate:!!animate,padding:[6,6]});
+}
+function resetView(){ fitAll(true); }
+
+let declutterQueued=false;
+function declutterLabels(){
+  const mapEl=q('mapEl');
+  if(!mapEl) return;
+  const els=[...mapEl.querySelectorAll('.leaflet-tooltip.zl-label')];
+  if(!els.length) return;
+  const withEmp=new Set(EMPS.map(e=>norm(e.bairro)));
+  els.forEach(el=>{ el.style.display=''; });
+  const items=els.map(el=>({el,pri:withEmp.has(norm(el.textContent))?1:0})).sort((a,b)=>b.pri-a.pri);
+  const kept=[];
+  items.forEach(it=>{
+    const r=it.el.getBoundingClientRect();
+    const hit=kept.some(k=>!(r.right<k.left-2||r.left>k.right+2||r.bottom<k.top-2||r.top>k.bottom+2));
+    if(hit) it.el.style.display='none'; else kept.push(r);
+  });
+}
+
+async function loadDistricts(){
+  const L=window.L;
+  const wanted=new Set(zlDistritos.map(d=>norm(d)));
+  const withEmpSet=new Set(EMPS.map(e=>norm(e.bairro)));
+  let feats=null;
+  try{
+    const res=await fetch('https://raw.githubusercontent.com/codigourbano/distritos-sp/master/distritos-sp.geojson');
+    const gj=await res.json();
+    feats=(gj.features||[]).filter(f=>wanted.has(norm((f.properties||{}).ds_nome)))
+      .map(f=>({...f, properties:{...f.properties, __nome:f.properties.ds_nome}}));
+  }catch(_){ feats=null; }
+
+  if(!feats||!feats.length){
+    distrLayer=L.polygon(zlShape,{color:'#fff',weight:2,fillColor:'#F0EEE9',fillOpacity:1}).addTo(map);
+    zlBounds=L.latLngBounds(zlShape);
+    fitAll(false);
+    return;
+  }
+
+  distrLayer=L.geoJSON({type:'FeatureCollection',features:feats},{
+    style:f=>({color:state.theme==='dark'?'#0B0D10':'#FFFFFF',weight:1.6,opacity:1,
+      fillColor:distritoFill(f.properties.__nome,state.theme==='dark',withEmpSet),fillOpacity:1}),
+    onEachFeature:(f,layer)=>{
+      const nome=f.properties.__nome;
+      layer.bindTooltip(nome,{permanent:true,direction:'center',className:'zl-label',opacity:1});
+      layer.on('mouseover',()=>{ layer.setStyle({weight:2.6}); if(layer.bringToFront) layer.bringToFront(); if(layer._path) layer._path.style.filter='brightness(1.06)'; });
+      layer.on('mouseout',()=>{ layer.setStyle({weight:1.6}); if(layer._path) layer._path.style.filter=''; });
+    },
+  }).addTo(map);
+
+  zlBounds=distrLayer.getBounds();
+  fitAll(false);
+  map.on('zoomend moveend', ()=>requestAnimationFrame(declutterLabels));
+  setTimeout(()=>{ declutterLabels(); syncList(); },120);
+}
+
+function initMap(){
+  const L=window.L;
+  map=L.map(q('mapEl'),{zoomControl:true,scrollWheelZoom:true,maxZoom:18,attributionControl:false,zoomSnap:.25}).setView([-23.545,-46.53],12);
+  loadDistricts();
+  markers={};
+  EMPS.forEach(e=>{
+    const marker=L.marker([e.lat,e.lng],{icon:makeIcon(e,false)}).addTo(map);
+    marker.bindPopup(popupHtml(e),{offset:[0,-16],closeButton:false,autoPan:false,minWidth:288,maxWidth:288});
+    marker.on('mouseover',()=>{ placePopup(marker,e); marker.openPopup(); setHover(e.id); });
+    marker.on('mouseout',()=>{ marker.closePopup(); setHover(null); });
+    marker.on('click',()=>{ window.location.href='empreendimento.html?id='+encodeURIComponent(e.id); });
+    markers[e.id]=marker;
+  });
+  fitAll(false);
+  map.on('moveend zoomend', syncList);
+  setTimeout(()=>{ try{map.invalidateSize();}catch(_){} syncList(); },200);
+}
+
+function renderCard(e){
+  const active=state.hoverId===e.id;
+  return `<div class="ecard ${active?'active':''}" data-id="${e.id}" data-act="cardHover" style="position:relative;height:250px;flex-shrink:0;border-radius:16px;overflow:hidden;cursor:pointer;background:var(--ph1);border:1px solid var(--card-brd)">
+    <img src="${esc(e.fachada)}" alt="${esc(e.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.02) 30%,rgba(0,0,0,.42) 58%,rgba(0,0,0,.92) 100%)"></div>
+    <span style="position:absolute;left:12px;top:12px;padding:5px 11px;border-radius:999px;font-size:11px;font-weight:600;color:#fff;background:${statusColor(e.status)};box-shadow:0 2px 8px rgba(0,0,0,.3)">${esc(e.status)}</span>
+    <span style="position:absolute;right:12px;top:12px;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.26);backdrop-filter:blur(6px);color:#fff;font-size:11px;font-weight:600;white-space:nowrap">${esc(e.entrega)}</span>
+    <div style="position:absolute;left:0;right:0;bottom:0;padding:16px;color:#fff">
+      <div style="font-size:11.5px;font-weight:500;opacity:.9;margin-bottom:4px;text-shadow:0 1px 4px rgba(0,0,0,.5)">${esc(e.incorporadora)} · ${esc(e.bairro)}</div>
+      <div style="font-size:17px;font-weight:600;letter-spacing:-.01em;line-height:1.18;margin-bottom:10px;text-shadow:0 1px 6px rgba(0,0,0,.5)">${esc(e.nome)}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px">
+        <span style="padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(6px);font-size:11px;font-weight:500;color:#fff">${MSI('bed',12)} ${esc(e.quartos)}</span>
+        <span style="padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(6px);font-size:11px;font-weight:500;color:#fff">${MSI('straighten',12)} ${e.area} m²</span>
+        <span style="padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(6px);font-size:11px;font-weight:500;color:#fff">${MSI('directions_car',12)} ${esc(e.vagas)}</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px">
+        <div><div style="font-size:10.5px;opacity:.8">A partir de</div>
+        <div style="font-size:20px;font-weight:600;letter-spacing:-.01em;text-shadow:0 1px 6px rgba(0,0,0,.5)">${fmtK(e.preco)}</div></div>
+        <span style="font-size:11px;opacity:.85;text-align:right;line-height:1.3;max-width:120px">${esc(e.dif)}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function syncList(){
+  if(!map) return;
+  const b=map.getBounds();
+  const visible=EMPS.filter(e=>b.contains(window.L.latLng(e.lat,e.lng))).sort((a,c)=>a.preco-c.preco);
+  q('visibleCount').textContent=visible.length;
+  q('totalCount').textContent=EMPS.length;
+  if(!visible.length){
+    q('listRoot').innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--muted)">
+      <div class="msi" style="font-size:34px;margin-bottom:10px">search_off</div>
+      <div style="font-size:14.5px;margin-bottom:6px">Nenhum empreendimento nesta área</div>
+      <button data-act="resetView" style="background:none;border:none;color:var(--red);font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;text-decoration:underline">Voltar para toda a Zona Leste</button>
+    </div>`;
+    return;
+  }
+  q('listRoot').innerHTML=visible.map(renderCard).join('');
+}
+
+const ACTIONS={
+  toggleTheme(){
+    state.theme=state.theme==='light'?'dark':'light';
+    q('root').dataset.theme=state.theme;
+    q('themeBtn').textContent=state.theme==='light'?'☾':'☀';
+    if(distrLayer && distrLayer.setStyle){
+      const withEmpSet=new Set(EMPS.map(e=>norm(e.bairro)));
+      const dark=state.theme==='dark';
+      distrLayer.setStyle(f=>({color:dark?'#0B0D10':'#FFFFFF',weight:1.6,fillColor:distritoFill(f&&f.properties&&f.properties.__nome,dark,withEmpSet),fillOpacity:1}));
+    }
+  },
+  resetView(){ resetView(); },
+  cardHover(t){ hoverFromList(t.dataset.id, true); t.scrollIntoView && t.scrollIntoView({block:'nearest'}); },
+};
+document.addEventListener('click', e=>{
+  const t=e.target.closest('[data-act]');
+  if(!t) return;
+  ACTIONS[t.dataset.act]?.(t,e);
+});
+document.addEventListener('mouseover', e=>{
+  const t=e.target.closest('.ecard[data-id]');
+  if(!t) return;
+  hoverFromList(t.dataset.id, true);
+});
+document.addEventListener('mouseout', e=>{
+  const t=e.target.closest('.ecard[data-id]');
+  if(!t) return;
+  const to=e.relatedTarget;
+  if(to && t.contains(to)) return;
+  hoverFromList(t.dataset.id, false);
+});
+
+(async function boot(){
+  try{
+    EMPS = await loadAll();
+  }catch(err){
+    q('loadOverlay').textContent='Erro ao carregar o mapa. Verifique a conexão e recarregue a página.';
+    console.error(err);
+    return;
+  }
+  initMap();
+  q('loadOverlay').style.display='none';
+  q('root').style.display='flex';
+})();
+</script>
+</body>
+</html>
