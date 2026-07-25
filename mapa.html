@@ -148,14 +148,30 @@ function distritoFill(name, dark, withEmpSet){
 }
 
 async function loadAll(){
-  const [emps,tips,imgs] = await Promise.all([
+  const [emps,tips] = await Promise.all([
     sbFetch('empreendimentos',{select:'id,nome,bairro,bairro_comercial,status,mes_entrega,incorporadora,diferenciais_apto,preco_min,area_min_m2,tipo_min_quartos',ativo:'eq.true',limit:'500'}),
     sbFetch('empreendimento_tipologias',{select:'empreendimento_id,area_m2,quartos,vagas,preco_a_partir',ativo:'eq.true',limit:'3000'}),
-    sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,tipo,ordem',ativo:'eq.true',tipo:'eq.fachada',order:'empreendimento_id,ordem',limit:'2000'}),
   ]);
+  let imgs=[], off=0;
+  while(true){
+    const batch=await sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,tipo,ordem',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'1000',offset:String(off)});
+    imgs=imgs.concat(batch);
+    if(batch.length<1000) break;
+    off+=1000;
+  }
   const tipsBy={}, imgBy={};
   tips.forEach(t=>{ (tipsBy[t.empreendimento_id]=tipsBy[t.empreendimento_id]||[]).push(t); });
-  imgs.forEach(i=>{ if(!imgBy[i.empreendimento_id]) imgBy[i.empreendimento_id]=i.url; });
+  const imgsByEmp={};
+  imgs.forEach(i=>{ (imgsByEmp[i.empreendimento_id]=imgsByEmp[i.empreendimento_id]||[]).push(i); });
+  const TIPO_PRIORITY=['fachada','perspectiva_3d','lazer','interiores','planta','foto_obra','outros'];
+  Object.keys(imgsByEmp).forEach(id=>{
+    const list=imgsByEmp[id];
+    for(const tipo of TIPO_PRIORITY){
+      const found=list.find(i=>i.tipo===tipo);
+      if(found){ imgBy[id]=found.url; return; }
+    }
+    imgBy[id]=list[0]?.url;
+  });
 
   // group by resolved neighborhood coordinate so we can spread developments
   // that share the same neighborhood into a small rosette (same fix as the
@@ -224,7 +240,7 @@ function popupHtml(e){
   const c=statusColor(e.status);
   const chip=t=>`<span style="padding:4px 9px;border-radius:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(6px);font-size:11px;font-weight:500;color:#fff;white-space:nowrap">${t}</span>`;
   return `<div style="position:relative;width:288px;height:290px;border-radius:16px;overflow:hidden;background:#EDEBE6;box-shadow:0 22px 50px rgba(0,0,0,.4);font-family:'General Sans',sans-serif">
-    <img src="${esc(e.fachada)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+    <img src="${esc(e.fachada)}" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
     <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.02) 28%,rgba(0,0,0,.42) 56%,rgba(0,0,0,.92) 100%)"></div>
     <span style="position:absolute;left:12px;top:12px;padding:5px 11px;border-radius:999px;background:${c};color:#fff;font-size:11px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3)">${esc(e.status)}</span>
     <span style="position:absolute;right:12px;top:12px;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.26);backdrop-filter:blur(6px);color:#fff;font-size:11px;font-weight:600;white-space:nowrap">${esc(e.entrega)}</span>
@@ -364,7 +380,7 @@ function initMap(){
 function renderCard(e){
   const active=state.hoverId===e.id;
   return `<div class="ecard ${active?'active':''}" data-id="${e.id}" data-act="cardHover" style="position:relative;height:250px;flex-shrink:0;border-radius:16px;overflow:hidden;cursor:pointer;background:var(--ph1);border:1px solid var(--card-brd)">
-    <img src="${esc(e.fachada)}" alt="${esc(e.nome)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+    <img src="${esc(e.fachada)}" alt="${esc(e.nome)}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
     <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.02) 30%,rgba(0,0,0,.42) 58%,rgba(0,0,0,.92) 100%)"></div>
     <span style="position:absolute;left:12px;top:12px;padding:5px 11px;border-radius:999px;font-size:11px;font-weight:600;color:#fff;background:${statusColor(e.status)};box-shadow:0 2px 8px rgba(0,0,0,.3)">${esc(e.status)}</span>
     <span style="position:absolute;right:12px;top:12px;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.26);backdrop-filter:blur(6px);color:#fff;font-size:11px;font-weight:600;white-space:nowrap">${esc(e.entrega)}</span>
