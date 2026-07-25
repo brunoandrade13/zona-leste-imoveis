@@ -298,11 +298,11 @@ async function loadDistricts(){
   const withEmpSet=new Set(EMPS.map(e=>norm(e.bairro)));
   let feats=null;
   try{
-    const res=await fetch('https://raw.githubusercontent.com/codigourbano/distritos-sp/master/distritos-sp.geojson');
+    const res=await fetch('assets/zl-distritos.geojson.json');
     const gj=await res.json();
     feats=(gj.features||[]).filter(f=>wanted.has(norm((f.properties||{}).ds_nome)))
       .map(f=>({...f, properties:{...f.properties, __nome:f.properties.ds_nome}}));
-  }catch(_){ feats=null; }
+  }catch(err){ console.error('districts load failed',err); feats=null; }
 
   if(!feats||!feats.length){
     distrLayer=L.polygon(zlShape,{color:'#fff',weight:2,fillColor:'#F0EEE9',fillOpacity:1}).addTo(map);
@@ -331,6 +331,7 @@ async function loadDistricts(){
 function initMap(){
   const L=window.L;
   map=L.map(q('mapEl'),{zoomControl:true,scrollWheelZoom:true,maxZoom:18,attributionControl:false,zoomSnap:.25}).setView([-23.545,-46.53],12);
+  requestAnimationFrame(()=>{ try{map.invalidateSize();}catch(_){} });
   loadDistricts();
   markers={};
   EMPS.forEach(e=>{
@@ -343,7 +344,11 @@ function initMap(){
   });
   fitAll(false);
   map.on('moveend zoomend', syncList);
-  setTimeout(()=>{ try{map.invalidateSize();}catch(_){} syncList(); },200);
+  // The container's CSS Grid/Flex layout may not have its final size yet the
+  // first time fitBounds runs, which can produce a wrong (often way too
+  // zoomed-in) initial view. Re-check the size and re-fit once layout has
+  // definitely settled, as a reliable safety net.
+  setTimeout(()=>{ try{map.invalidateSize();}catch(_){} fitAll(false); syncList(); },300);
 }
 
 function renderCard(e){
