@@ -143,6 +143,18 @@ select:hover,select:focus{border-color:var(--acc);outline:none;}
 #gstrip img{width:78px;height:52px;object-fit:cover;border-radius:3px;cursor:pointer;opacity:.5;transition:opacity .15s,border-color .15s;border:2px solid transparent;flex-shrink:0;}
 #gstrip img:hover,#gstrip img.on{opacity:1;border-color:var(--acc);}
 
+/* ── CATEGORIAS DE IMAGEM (fachada / planta / lazer e serviço / apartamento) ── */
+#gcats{display:flex;gap:6px;padding:8px 10px;background:#000;overflow-x:auto;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,.06);}
+.gcat-chip{--chip-color:#7b8aaa;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:#c9d2e3;font-family:inherit;font-size:11px;padding:4px 10px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:all .15s;}
+.gcat-chip::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--chip-color);flex-shrink:0;}
+.gcat-chip b{font-weight:700;}
+.gcat-chip:hover{border-color:var(--chip-color);}
+.gcat-chip.on{background:var(--chip-color);border-color:var(--chip-color);color:#0b0e14;}
+.gcat-chip.on::before{background:#0b0e14;}
+#gmain-cat{--chip-color:#7b8aaa;position:absolute;top:10px;left:10px;background:var(--chip-color);color:#0b0e14;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;backdrop-filter:blur(4px);}
+.gthumb-wrap{position:relative;flex-shrink:0;}
+.gthumb-cat{--chip-color:#7b8aaa;position:absolute;bottom:3px;left:3px;width:8px;height:8px;border-radius:50%;background:var(--chip-color);border:1px solid rgba(0,0,0,.5);pointer-events:none;}
+
 /* ── FULLSCREEN GALLERY ── */
 #fs-ov{display:none;position:fixed;inset:0;background:#000;z-index:1000;align-items:center;justify-content:center;}
 #fs-ov.open{display:flex;}
@@ -152,6 +164,7 @@ select:hover,select:focus{border-color:var(--acc);outline:none;}
 #fs-prev:hover,#fs-next:hover{background:rgba(255,255,255,.2);}
 #fs-prev{left:16px;}#fs-next{right:16px;}
 #fs-counter{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.7);font-size:12px;}
+#fs-cat{--chip-color:#7b8aaa;position:absolute;top:18px;left:18px;background:var(--chip-color);color:#0b0e14;font-size:12px;font-weight:700;padding:4px 11px;border-radius:6px;}
 
 /* ── MODAL BODY ── */
 #mbod{padding:20px 24px 26px;}
@@ -320,6 +333,7 @@ code{font-family:'SF Mono',monospace;font-size:10px;background:var(--bdr);paddin
 <!-- FULLSCREEN GALLERY -->
 <div id="fs-ov">
   <img id="fs-img" src="" alt="">
+  <span id="fs-cat"></span>
   <button id="fs-close" onclick="closeFullscreen()">✕</button>
   <button id="fs-prev" onclick="fsNav(-1)">‹</button>
   <button id="fs-next" onclick="fsNav(1)">›</button>
@@ -357,7 +371,7 @@ async function load(){
     // (dinâmico — não trunca conforme o catálogo cresce, ao contrário do limite fixo anterior)
     let ims=[],imOffset=0;
     while(true){
-      const batch=await sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,ordem,is_capa,tipo',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'1000',offset:String(imOffset)});
+      const batch=await sbFetch('empreendimento_imagens',{select:'empreendimento_id,url,ordem,is_capa,tipo,categoria',ativo:'eq.true',order:'empreendimento_id,ordem',limit:'1000',offset:String(imOffset)});
       ims=ims.concat(batch);
       if(batch.length<1000)break;
       imOffset+=1000;
@@ -616,11 +630,31 @@ function cardH(e){
   </div>`;
 }
 
+// ── CATEGORIAS DE IMAGEM ──
+const CAT_META={
+  fachada:{label:'Fachada',color:'#f59e0b'},
+  planta:{label:'Planta',color:'#60a5fa'},
+  lazer_servico:{label:'Lazer e Serviço',color:'#34d399'},
+  apartamento:{label:'Apartamento',color:'#c084fc'},
+};
+const CAT_ORDER=['fachada','planta','lazer_servico','apartamento'];
+function catMeta(c){return CAT_META[c]||{label:'Sem categoria',color:'#7b8aaa'};}
+
+let CUR_IMGS_ALL=[],CUR_FILTER=null;
+
 // ── MODAL ──
 function openM(id){
   const e=ALL.find(x=>x.id===id);if(!e)return;
-  const imgs=(IMGS[id]||[]).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
-  CUR_IMGS=imgs; CUR_IDX=0;
+  // Agrupa por categoria (fachada, planta, lazer/serviço, apartamento) e,
+  // dentro de cada grupo, mantém a ordem original — assim dá pra avaliar
+  // rapidamente se a divisão em grupos ficou correta.
+  const imgs=(IMGS[id]||[]).slice().sort((a,b)=>{
+    const oa=CAT_ORDER.indexOf(a.categoria),ob=CAT_ORDER.indexOf(b.categoria);
+    const ra=oa===-1?99:oa,rb=ob===-1?99:ob;
+    if(ra!==rb)return ra-rb;
+    return(a.ordem||0)-(b.ordem||0);
+  });
+  CUR_IMGS_ALL=imgs; CUR_FILTER=null; CUR_IMGS=imgs; CUR_IDX=0;
 
   q('mhdr-nome').textContent=e.nome;
   q('mfs-btn').style.display=imgs.length?'flex':'none';
@@ -631,24 +665,50 @@ function openM(id){
   document.body.style.overflow='hidden';
 }
 
+function catCounts(imgs){
+  const m={};
+  imgs.forEach(i=>{const c=i.categoria||'_sem';m[c]=(m[c]||0)+1;});
+  return m;
+}
+
 function renderGallery(imgs,idx){
   const gal=q('mgal');
   if(!imgs.length){
     gal.innerHTML=`<div style="height:200px;display:flex;align-items:center;justify-content:center;background:var(--card);color:var(--fnt);font-size:13px;">📷 Sem fotos disponíveis</div>`;
     return;
   }
+  const counts=catCounts(CUR_IMGS_ALL);
+  const chipDefs=[['_all','Todas',CUR_IMGS_ALL.length,'#7b8aaa'],
+    ...CAT_ORDER.filter(c=>counts[c]).map(c=>[c,catMeta(c).label,counts[c],catMeta(c).color]),
+    ...(counts['_sem']?[['_sem','Sem categoria',counts['_sem'],'#7b8aaa']]:[])
+  ];
+  const chips=chipDefs.map(([key,label,n,color])=>
+    `<button class="gcat-chip ${((CUR_FILTER||'_all')===key)?'on':''}" style="--chip-color:${color}" onclick="filterGal('${key}')">${label} <b>${n}</b></button>`
+  ).join('');
+
+  const m=catMeta(imgs[idx].categoria);
   gal.innerHTML=`
+    <div id="gcats">${chips}</div>
     <div id="gmain-wrap">
       <img id="gmain" src="${imgs[idx].url}" alt="" onerror="this.style.opacity=.2">
+      <span id="gmain-cat" style="--chip-color:${m.color}">${m.label}</span>
       <button class="g-nav" id="gprev" onclick="galNav(-1)" ${imgs.length<=1?'style="display:none"':''}>‹</button>
       <button class="g-nav" id="gnext" onclick="galNav(1)" ${imgs.length<=1?'style="display:none"':''}>›</button>
       <div id="gcounter">${idx+1} / ${imgs.length}</div>
     </div>
-    <div id="gstrip">${imgs.map((im,i)=>`<img src="${im.url}" class="${i===idx?'on':''}" data-idx="${i}" onclick="setImg(${i})" loading="lazy">`).join('')}</div>
+    <div id="gstrip">${imgs.map((im,i)=>{const mm=catMeta(im.categoria);return`<div class="gthumb-wrap"><img src="${im.url}" class="${i===idx?'on':''}" data-idx="${i}" onclick="setImg(${i})" loading="lazy"><span class="gthumb-cat" style="--chip-color:${mm.color}" title="${mm.label}"></span></div>`;}).join('')}</div>
   `;
   // click on main image to go fullscreen
   q('gmain').addEventListener('click',()=>{openFullscreen(idx);});
 }
+
+window.filterGal=function(key){
+  CUR_FILTER=key==='_all'?null:key;
+  CUR_IMGS=CUR_FILTER?CUR_IMGS_ALL.filter(i=>(i.categoria||'_sem')===CUR_FILTER):CUR_IMGS_ALL;
+  if(!CUR_IMGS.length)CUR_IMGS=CUR_IMGS_ALL;
+  CUR_IDX=0;
+  renderGallery(CUR_IMGS,0);
+};
 
 window.galNav=function(dir){
   CUR_IDX=(CUR_IDX+dir+CUR_IMGS.length)%CUR_IMGS.length;
@@ -661,6 +721,9 @@ window.setImg=function(i){
   const gm=q('gmain');if(!gm)return;
   gm.src=imgs[i].url;
   q('gcounter').textContent=`${i+1} / ${imgs.length}`;
+  const m=catMeta(imgs[i].categoria);
+  const badge=q('gmain-cat');
+  if(badge){badge.textContent=m.label;badge.style.setProperty('--chip-color',m.color);}
   document.querySelectorAll('#gstrip img').forEach((el,j)=>{
     el.classList.toggle('on',j===i);
     if(j===i)el.scrollIntoView({block:'nearest',inline:'center'});
@@ -688,6 +751,9 @@ window.fsNav=fsNav;
 function fsUpdate(){
   q('fs-img').src=CUR_IMGS[FS_IDX].url;
   q('fs-counter').textContent=`${FS_IDX+1} / ${CUR_IMGS.length}`;
+  const m=catMeta(CUR_IMGS[FS_IDX].categoria);
+  const b=q('fs-cat');
+  if(b){b.textContent=m.label;b.style.setProperty('--chip-color',m.color);}
 }
 
 // Close modal
