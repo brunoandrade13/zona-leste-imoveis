@@ -883,7 +883,11 @@ function mapPopupHtml(e,t){
 const STATUS_COLORS_MAP={'Lançamento':'#C9A227','Breve lançamento':'#C9A227','Em construção':'#3B5B8C','Na planta':'#7A4C6B','Pronto p/ morar':'#4C7A5B'};
 function mapMakeIcon(status){
   const c=STATUS_COLORS_MAP[status]||'#6B6F76';
-  return window.L.divIcon({className:'',iconSize:[0,0],html:'<div style="transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:'+c+';border:2.5px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.35)"></div>'});
+  const size=30;
+  const html='<div style="transform:translate(-50%,-84%);transform-origin:bottom center;position:relative;width:'+size+'px;height:'+size+'px">'
+    + '<img src="assets/icones-mapa/icone-empreendimento.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block;-webkit-user-drag:none">'
+    + '<span style="position:absolute;top:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:'+c+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></span></div>';
+  return window.L.divIcon({className:'',iconSize:[0,0],html});
 }
 
 async function loadMapDistricts(map, withEmpSet){

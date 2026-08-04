@@ -51,6 +51,9 @@
   [data-theme="dark"] .zl-label{color:#EDE8E2 !important;text-shadow:0 1px 3px rgba(0,0,0,.7)}
   .zl-list::-webkit-scrollbar{width:8px}
   .zl-list::-webkit-scrollbar-thumb{background:rgba(120,120,120,.35);border-radius:99px}
+  .zl-poi-tip{background:#fff !important;border:none !important;border-radius:8px !important;box-shadow:0 6px 18px rgba(50,38,34,.28) !important;
+    font:600 11.5px/1 'General Sans',sans-serif !important;color:#3A342E !important;padding:6px 9px !important}
+  .zl-poi-tip::before{border-top-color:#fff !important}
   .ecard{transition:transform .25s,box-shadow .25s,border-color .25s}
   .ecard:hover, .ecard.active{transform:translateY(-3px);box-shadow:0 22px 44px -16px rgba(17,17,17,.5);border-color:var(--red) !important}
   #loadOverlay{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
@@ -98,8 +101,41 @@
 
     <div style="position:relative;min-height:0">
       <div id="mapEl" style="position:absolute;inset:0;background:var(--surface);z-index:0"></div>
-      <div style="position:absolute;left:16px;bottom:16px;z-index:400;display:flex;gap:8px;align-items:center;padding:8px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(12px);font-size:12.5px;color:var(--text);box-shadow:var(--shadow)">
-        <span style="width:9px;height:9px;border-radius:99px;background:var(--red)"></span> Passe o mouse num ponto para ver o card
+      <div style="position:absolute;left:16px;bottom:16px;z-index:400;display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:16px;background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(12px);color:var(--text);box-shadow:var(--shadow);max-width:300px">
+        <span style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Legenda</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 18px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;white-space:nowrap">
+            <span style="width:28px;height:28px;flex-shrink:0"><img src="assets/icones-mapa/icone-empreendimento.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
+            Empreendimento
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;white-space:nowrap">
+            <span style="width:28px;height:28px;flex-shrink:0"><img src="assets/icones-mapa/icone-metro.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
+            Metrô / trem
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;white-space:nowrap">
+            <span style="width:28px;height:28px;flex-shrink:0"><img src="assets/icones-mapa/icone-shopping.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
+            Shopping
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;white-space:nowrap">
+            <span style="width:28px;height:28px;flex-shrink:0"><img src="assets/icones-mapa/icone-parque.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
+            Parque
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;white-space:nowrap">
+            <span style="width:28px;height:28px;flex-shrink:0"><img src="assets/icones-mapa/icone-escola.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
+            Escola
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;white-space:nowrap">
+            <span style="width:28px;height:28px;flex-shrink:0"><img src="assets/icones-mapa/icone-saude.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></span>
+            Saúde
+          </div>
+        </div>
+        <div style="display:flex;gap:8px 14px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--card-brd)">
+          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#C9A227;flex-shrink:0"></span>Lançamento</span>
+          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#3B5B8C;flex-shrink:0"></span>Em construção</span>
+          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#7A4C6B;flex-shrink:0"></span>Na planta</span>
+          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#4C7A5B;flex-shrink:0"></span>Pronto p/ morar</span>
+        </div>
+        <span style="font-size:11.5px;color:var(--muted)">Passe o mouse num ponto para ver o card</span>
       </div>
     </div>
   </div>
@@ -144,7 +180,43 @@ const paletteDark = ['#5A4442','#5C5340','#564742','#4B4245','#3F4A55','#514250'
 let EMPS=[];
 const state={ theme:'light', hoverId:null, panelOpen:false, panelExpanded:null,
   filters:{ status:'', bairro:'', quartos:'', faixa:'' } };
-let map=null, markers={}, distrLayer=null, zlBounds=null;
+let map=null, markers={}, distrLayer=null, zlBounds=null, poiMarkers=null;
+
+// Pontos de referência reais da Zona Leste (metrô/trem, shopping, parque,
+// escola, saúde) — coordenadas conferidas em 2026-08-04 contra Wikipédia,
+// OpenStreetMap e sites oficiais. Dois nomes do rascunho original eram
+// genéricos/errados (um colégio ficava no lado oposto da cidade, e "Escola
+// Estadual Penha" não correspondia a nenhuma escola real) e foram trocados
+// por instituições reais e verificadas na mesma região.
+const ICON_BASE='assets/icones-mapa/';
+const ICON_FILES={predio:'icone-empreendimento.png',metro:'icone-metro.png',shopping:'icone-shopping.png',parque:'icone-parque.png',escola:'icone-escola.png',hospital:'icone-saude.png'};
+const POIS=[
+  {tipo:'metro',nome:'Metrô Tatuapé',lat:-23.5403,lng:-46.5765},
+  {tipo:'metro',nome:'Metrô Carrão',lat:-23.5378,lng:-46.5642},
+  {tipo:'metro',nome:'Metrô Vila Matilde',lat:-23.5319,lng:-46.5306},
+  {tipo:'metro',nome:'Metrô Patriarca-Vila Ré',lat:-23.5311,lng:-46.5014},
+  {tipo:'metro',nome:'Metrô/CPTM Itaquera',lat:-23.5424,lng:-46.4711},
+  {tipo:'metro',nome:'Metrô Penha',lat:-23.5335,lng:-46.5425},
+  {tipo:'metro',nome:'Estação Tamanduateí',lat:-23.5925,lng:-46.5894},
+  {tipo:'shopping',nome:'Shopping Metrô Tatuapé',lat:-23.5417,lng:-46.5770},
+  {tipo:'shopping',nome:'Shopping Anália Franco',lat:-23.5615,lng:-46.5602},
+  {tipo:'shopping',nome:'Shopping Metrô Itaquera',lat:-23.5408,lng:-46.4705},
+  {tipo:'shopping',nome:'Shopping Metrô Penha',lat:-23.5252,lng:-46.5468},
+  {tipo:'shopping',nome:'Shopping Aricanduva',lat:-23.5660,lng:-46.5040},
+  {tipo:'parque',nome:'Parque Ceret',lat:-23.5556,lng:-46.5596},
+  {tipo:'parque',nome:'Parque do Carmo',lat:-23.5750,lng:-46.4692},
+  {tipo:'parque',nome:'Parque Piqueri',lat:-23.5284,lng:-46.5737},
+  {tipo:'parque',nome:'Parque Linear Tiquatira',lat:-23.5143,lng:-46.5464},
+  {tipo:'escola',nome:'Colégio Carlos Drummond de Andrade',lat:-23.5498,lng:-46.5578},
+  {tipo:'escola',nome:'Colégio Jardim Anália Franco',lat:-23.5539,lng:-46.5620},
+  {tipo:'escola',nome:'ETEC Itaquera',lat:-23.5446,lng:-46.4675},
+  {tipo:'escola',nome:'E.E. Nossa Senhora da Penha',lat:-23.5211,lng:-46.5477},
+  {tipo:'hospital',nome:'Hospital Villa-Lobos',lat:-23.5633,lng:-46.5900},
+  {tipo:'hospital',nome:'Hospital Santa Marcelina',lat:-23.5543,lng:-46.4614},
+  {tipo:'hospital',nome:'Hospital do Tatuapé',lat:-23.5330,lng:-46.5664},
+];
+function zoomScale(){ const z=map?map.getZoom():13; return Math.max(0.62,Math.min(1.5,0.62+(z-12.5)*0.22)); }
+function artFor(tipo){ const f=ICON_FILES[tipo]||ICON_FILES.parque; return '<img src="'+ICON_BASE+f+'" alt="" style="width:100%;height:100%;object-fit:contain;display:block;-webkit-user-drag:none">'; }
 
 function distritoFill(name, dark, withEmpSet){
   const n=norm(name);
@@ -233,16 +305,57 @@ async function loadAll(){
 
 function makeIcon(e, active){
   const c=statusColor(e.status);
+  const size=Math.round((active?52:44)*zoomScale());
+  const dot='<span style="position:absolute;top:-1px;right:-1px;width:'+Math.round(size*.27)+'px;height:'+Math.round(size*.27)+'px;border-radius:50%;background:'+c+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></span>';
+  const art='<div style="position:relative;width:'+size+'px;height:'+size+'px">'+artFor('predio')+dot+'</div>';
   let html;
   if(active){
-    html = '<div style="transform:translate(-50%,-100%);transform-origin:bottom center;display:flex;flex-direction:column;align-items:center">'
-      + '<div style="background:#9E1B1B;color:#fff;font:600 12px/1 sans-serif;padding:6px 10px;border-radius:9px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.4);border:1.5px solid #fff;display:flex;align-items:center;gap:6px">'
-      + '<span style="width:7px;height:7px;border-radius:50%;background:#fff;flex-shrink:0"></span>' + fmtK(e.preco) + '</div>'
-      + '<div style="width:2px;height:9px;background:#9E1B1B"></div></div>';
+    const badge='<div style="margin-bottom:4px;background:#9E1B1B;color:#fff;font:600 12px/1 sans-serif;padding:6px 10px;border-radius:9px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.4);border:1.5px solid #fff">'+fmtK(e.preco)+'</div>';
+    html='<div style="transform:translate(-50%,-92%) translateY(-4px);transform-origin:bottom center;transition:transform .18s ease;display:flex;flex-direction:column;align-items:center">'+badge+art+'</div>';
   } else {
-    html = '<div style="transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:'+c+';border:2.5px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.35)"></div>';
+    html='<div style="transform:translate(-50%,-84%);transform-origin:bottom center;transition:transform .18s ease">'+art+'</div>';
   }
   return window.L.divIcon({ className:'', iconSize:[0,0], html });
+}
+
+function poiIcon(p){
+  const size=Math.round(34*zoomScale());
+  const html='<div style="transform:translate(-50%,-84%);transform-origin:bottom center;width:'+size+'px;height:'+size+'px">'+artFor(p.tipo)+'</div>';
+  return window.L.divIcon({ className:'', iconSize:[0,0], html });
+}
+
+function rescaleIcons(){
+  if(!map) return;
+  EMPS.forEach(e=>{ const m=markers[e.id]; if(m&&m._icon) m.setIcon(makeIcon(e, state.hoverId===e.id)); });
+  if(poiMarkers) poiMarkers.forEach((m,i)=>{ if(m._icon) m.setIcon(poiIcon(POIS[i])); });
+}
+
+// mesmo truque do protótipo: o Leaflet às vezes ignora addLayer() de um
+// marcador cujo id interno colide com um removido antes — renovando o id,
+// o marcador de fato entra no mapa.
+function forceAddPoi(m){
+  if(map.hasLayer(m) && !m._map) delete m._leaflet_id;
+  map.addLayer(m);
+  if(!m._map){ delete m._leaflet_id; map.addLayer(m); }
+}
+function repairPois(){
+  if(!map||!poiMarkers) return;
+  poiMarkers.forEach(m=>{ if(!m._icon) forceAddPoi(m); });
+}
+function addPois(){
+  if(!map) return;
+  if(poiMarkers) poiMarkers.forEach(m=>{ try{ map.removeLayer(m); }catch(_){} });
+  poiMarkers=[];
+  POIS.forEach(p=>{
+    const m=window.L.marker([p.lat,p.lng],{icon:poiIcon(p),zIndexOffset:400,riseOnHover:true});
+    m.bindTooltip(p.nome,{direction:'top',offset:[0,-30],className:'zl-poi-tip',opacity:1});
+    forceAddPoi(m);
+    poiMarkers.push(m);
+  });
+  repairPois();
+  map.whenReady(()=>repairPois());
+  setTimeout(()=>repairPois(),350);
+  setTimeout(()=>repairPois(),1200);
 }
 
 function popupHtml(e){
@@ -339,6 +452,8 @@ async function loadDistricts(){
     distrLayer=L.polygon(zlShape,{color:'#fff',weight:2,fillColor:'#F0EEE9',fillOpacity:1}).addTo(map);
     zlBounds=L.latLngBounds(zlShape);
     fitAll(false);
+    addPois();
+    map.on('zoomend', rescaleIcons);
     return;
   }
 
@@ -355,6 +470,8 @@ async function loadDistricts(){
 
   zlBounds=distrLayer.getBounds();
   fitAll(false);
+  addPois();
+  map.on('zoomend', rescaleIcons);
   map.on('zoomend moveend', ()=>requestAnimationFrame(declutterLabels));
   setTimeout(()=>{ declutterLabels(); syncList(); },120);
 }

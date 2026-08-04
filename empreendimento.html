@@ -265,7 +265,11 @@ function renderMap(emp){
   const L=window.L;
   leafletMap=L.map(el,{scrollWheelZoom:false}).setView([emp.lat,emp.lng],15);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(leafletMap);
-  const icon=L.divIcon({className:'',iconSize:[0,0],html:'<div style="display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%)"><div style="background:#9E1B1B;color:#fff;font:600 12px/1 sans-serif;padding:6px 9px;border-radius:9px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.4)">🏢 '+emp.nome.split(' ').slice(0,3).join(' ')+'</div><div style="width:2px;height:8px;background:#9E1B1B;margin:0 auto"></div></div>'});
+  const icon=L.divIcon({className:'',iconSize:[0,0],html:'<div style="display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%)">'
+    + '<div style="background:#9E1B1B;color:#fff;font:600 12px/1 sans-serif;padding:6px 9px;border-radius:9px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.4);display:flex;align-items:center;gap:6px">'
+    + '<img src="assets/icones-mapa/icone-empreendimento.png" alt="" style="width:16px;height:16px;object-fit:contain;display:block">'
+    + esc(emp.nome.split(' ').slice(0,3).join(' ')) + '</div>'
+    + '<div style="width:2px;height:8px;background:#9E1B1B;margin:0 auto"></div></div>'});
   L.marker([emp.lat,emp.lng],{icon,zIndexOffset:1000}).addTo(leafletMap);
   setTimeout(()=>{ try{leafletMap.invalidateSize();}catch(_){} },250);
 }
